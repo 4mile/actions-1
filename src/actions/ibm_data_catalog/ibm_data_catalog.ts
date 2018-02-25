@@ -1,4 +1,5 @@
 import * as Hub from "../../hub"
+import * as req from "request-promise-native"
 
 /*
 - define asset types for looker_look and looker_dashboard
@@ -85,7 +86,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async form(request: Hub.ActionRequest) {
     console.log('request params', request.params)
     const form = new Hub.ActionForm()
-    const bearer_token = await this.getBearerToken()
+    const bearer_token = await this.getBearerToken(request)
+    console.log('bearer_token', bearer_token)
 
     form.fields = [
       {
@@ -106,47 +108,61 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         name: "filename",
         type: "string",
       },
-      {
-        label: "Bearer Token",
-        name: bearer_token,
-        type: "string",
-      },
     ]
 
     return form
   }
 
-  async getBearerToken() {
-    return new Promise<string>((resolve) => {
-      setTimeout(() => {
-        resolve('a-bearer-token')
-      }, 100)
+  async getBearerToken(request: Hub.ActionRequest) {
+    // obtain a bearer token using an IBM Cloud API Key
+
+    // curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d
+    // "grant_type=urn:ibm:params:oauth:grant-type:apikey&response_type=cloud_iam&apikey=
+    // MYAPIKEY" "https://iam.ng.bluemix.net/identity/token"
+
+    const options = {
+      method: 'POST',
+      uri: 'https://iam.ng.bluemix.net/identity/token',
+      formData: {
+        grant_type: 'urn:ibm:params:oauth:grant-type:apikey',
+        response_type: 'cloud_iam',
+        apikey: request.params.ibm_cloud_api_key,
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    }
+
+    return new Promise((resolve, reject) => {
+      req(options)
+      .then(resolve)
+      .catch(reject)
     })
   }
 
-  async xform(request: Hub.ActionRequest) {
-    const form = new Hub.ActionForm()
-    const channels = await this.usableChannels(request)
+  // async xform(request: Hub.ActionRequest) {
+  //   const form = new Hub.ActionForm()
+  //   const channels = await this.usableChannels(request)
 
-    form.fields = [{
-      description: "Name of the Slack channel you would like to post to.",
-      label: "Share In",
-      name: "channel",
-      options: channels.map((channel) => ({ name: channel.id, label: channel.label })),
-      required: true,
-      type: "select",
-    }, {
-      label: "Comment",
-      type: "string",
-      name: "initial_comment",
-    }, {
-      label: "Filename",
-      name: "filename",
-      type: "string",
-    }]
+  //   form.fields = [{
+  //     description: "Name of the Slack channel you would like to post to.",
+  //     label: "Share In",
+  //     name: "channel",
+  //     options: channels.map((channel) => ({ name: channel.id, label: channel.label })),
+  //     required: true,
+  //     type: "select",
+  //   }, {
+  //     label: "Comment",
+  //     type: "string",
+  //     name: "initial_comment",
+  //   }, {
+  //     label: "Filename",
+  //     name: "filename",
+  //     type: "string",
+  //   }]
 
-    return form
-  }
+  //   return form
+  // }
 
   async usableChannels(request: Hub.ActionRequest) {
     let channels = await this.usablePublicChannels(request)
