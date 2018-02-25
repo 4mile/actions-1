@@ -82,6 +82,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
+  async form(request: Hub.ActionRequest) {
+    console.log('form')
+
+  }
+
   async xform(request: Hub.ActionRequest) {
     const form = new Hub.ActionForm()
     const channels = await this.usableChannels(request)
