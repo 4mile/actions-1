@@ -44,7 +44,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }]
 
   async execute(request: Hub.ActionRequest) {
-    return new Promise <Hub.ActionResponse>((resolve, reject) => {
+    return new Promise<Hub.ActionResponse>((resolve, reject) => {
 
       if (!request.attachment || !request.attachment.dataBuffer) {
         reject("Couldn't get data from attachment.")
@@ -75,7 +75,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       let response
       slack.files.upload(fileName, options, (err: any) => {
         if (err) {
-          response = {success: true, message: err.message}
+          response = { success: true, message: err.message }
         }
       })
       resolve(new Hub.ActionResponse(response))
@@ -83,8 +83,45 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async form(request: Hub.ActionRequest) {
-    console.log('form')
+    console.log('request params', request.params)
+    const form = new Hub.ActionForm()
+    const bearer_token = await this.getBearerToken()
 
+    form.fields = [
+      {
+        description: "Name of the catalog to send to",
+        label: "Send to",
+        name: "Catalog",
+        options: [],
+        required: true,
+        type: "select",
+      },
+      {
+        label: "Comment",
+        type: "string",
+        name: "initial_comment",
+      },
+      {
+        label: "Filename",
+        name: "filename",
+        type: "string",
+      },
+      {
+        label: "Bearer Token",
+        name: bearer_token,
+        type: "string",
+      },
+    ]
+
+    return form
+  }
+
+  async getBearerToken() {
+    return new Promise<string>((resolve) => {
+      setTimeout(() => {
+        resolve('a-bearer-token')
+      }, 100)
+    })
   }
 
   async xform(request: Hub.ActionRequest) {
@@ -95,7 +132,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       description: "Name of the Slack channel you would like to post to.",
       label: "Share In",
       name: "channel",
-      options: channels.map((channel) => ({name: channel.id, label: channel.label})),
+      options: channels.map((channel) => ({ name: channel.id, label: channel.label })),
       required: true,
       type: "select",
     }, {
@@ -128,7 +165,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           reject(err)
         } else {
           const channels = response.channels.filter((c: any) => c.is_member && !c.is_archived)
-          const reformatted: Channel[] = channels.map((channel: any) => ({id: channel.id, label: `#${channel.name}`}))
+          const reformatted: Channel[] = channels.map((channel: any) => ({ id: channel.id, label: `#${channel.name}` }))
           resolve(reformatted)
         }
       })
@@ -145,7 +182,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           const users = response.members.filter((u: any) => {
             return !u.is_restricted && !u.is_ultra_restricted && !u.is_bot && !u.deleted
           })
-          const reformatted: Channel[] = users.map((user: any) => ({id: user.id, label: `@${user.name}`}))
+          const reformatted: Channel[] = users.map((user: any) => ({ id: user.id, label: `@${user.name}` }))
           resolve(reformatted)
         }
       })
