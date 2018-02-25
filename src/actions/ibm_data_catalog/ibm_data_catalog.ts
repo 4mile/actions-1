@@ -1,5 +1,25 @@
 import * as Hub from "../../hub"
 
+/*
+- define asset types for looker_look and looker_dashboard
+
+update form method
+- get bearer token
+- get list of catalogs
+- display catalogs as destinations
+
+update execute method
+- parse asset type
+- parse destination
+- parse out metadata from looker object
+- send metadata as an asset to destination
+
+update tests?
+
+- should we get a new bearer token for every transaction
+*/
+
+
 const WebClient = require("@slack/client").WebClient
 
 interface Channel {
@@ -11,7 +31,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   name = "ibm_data_catalog"
   label = "IBM Data Catalog"
-  iconName = "ibm_data_catalog/ibm_data_catalog.png" // TODO
+  iconName = "ibm_data_catalog/ibm_logo.png"
   description = "Add an asset to an IBM Data Catalog"
   supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
   requiredFields = []
@@ -62,7 +82,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async form(request: Hub.ActionRequest) {
+  async xform(request: Hub.ActionRequest) {
     const form = new Hub.ActionForm()
     const channels = await this.usableChannels(request)
 
