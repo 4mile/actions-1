@@ -10,16 +10,16 @@ interface Channel {
 export class IbmDataCatalogAssetAction extends Hub.Action {
 
   name = "ibm_data_catalog"
-  label = "IBM Data Catalog Asset"
+  label = "IBM Data Catalog"
   iconName = "ibm_data_catalog/ibm_data_catalog.png" // TODO
   description = "Add an asset to an IBM Data Catalog"
   supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
   requiredFields = []
   params = [{
-    name: "ibm_data_catalog_token",
-    label: "IBM Data Catalog Token",
+    name: "ibm_cloud_api_key",
+    label: "IBM Cloud API Key",
     required: true,
-    description: "https://console-regional.ng.bluemix.net/#overview",
+    description: "Visit https://console-regional.ng.bluemix.net/#overview and go to Manage > Security > Platform API Keys",
     sensitive: true,
   }]
 
