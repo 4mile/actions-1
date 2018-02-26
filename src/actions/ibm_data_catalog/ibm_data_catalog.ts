@@ -22,6 +22,14 @@ update execute method
 update tests?
 
 - should we get a new bearer token for every transaction
+
+**** 2018-02-25
+can't get a proper POST to /assets working
+can post an empty `entity` but getting errors if i try to put any data in there
+related, stumped on 'asset_type' and 'asset_category'
+think we might need to define our asset types for Look and Dashboard first,
+but don't see a way to do that manually. maybe have to do it via the API
+
 */
 
 
