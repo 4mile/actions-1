@@ -92,11 +92,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     form.fields = [
       {
-        // description: "Name of the catalog to send to",
-        description: bearer_token.substring(0, 20),
+        description: "Name of the catalog to send to",
         label: "Send to",
         name: "Catalog",
-        options: [],
+        options: catalogs.map((catalog) => ({ name: catalog.guid, label: catalog.label })),
         required: true,
         type: "select",
       },
