@@ -1,5 +1,6 @@
 import * as Hub from "../../hub"
 import * as req from "request-promise-native"
+import * as qs from 'querystringify'
 
 /*
 - define asset types for looker_look and looker_dashboard
@@ -116,27 +117,35 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async getBearerToken(request: Hub.ActionRequest) {
     // obtain a bearer token using an IBM Cloud API Key
 
-    // curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d
-    // "grant_type=urn:ibm:params:oauth:grant-type:apikey&response_type=cloud_iam&apikey=
-    // MYAPIKEY" "https://iam.ng.bluemix.net/identity/token"
+    // curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&response_type=cloud_iam&apikey=ps2q46n3fjEYFhGefwHla2pCZBR1BHTWpCPxjVHBlfzb" "https://iam.ng.bluemix.net/identity/token"
+
+    const data = {
+      grant_type: 'urn:ibm:params:oauth:grant-type:apikey',
+      response_type: 'cloud_iam',
+      apikey: request.params.ibm_cloud_api_key,
+    }
 
     const options = {
       method: 'POST',
-      uri: 'https://iam.ng.bluemix.net/identity/token',
-      formData: {
-        grant_type: 'urn:ibm:params:oauth:grant-type:apikey',
-        response_type: 'cloud_iam',
-        apikey: request.params.ibm_cloud_api_key,
-      },
+      uri: 'https://iam.ng.bluemix.net/identity/token?' + qs.stringify(data),
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+        'content-type': 'application/x-www-form-urlencoded'
+      }
     }
 
     return new Promise((resolve, reject) => {
       req(options)
-      .then(resolve)
+      .then(response => {
+        try {
+          const data = JSON.parse(response)
+          if (response.access_token) return resolve(data.access_token)
+          throw new Error('response does not include access_token')
+        } catch(err) {
+          reject(err)
+        }
+      })
       .catch(reject)
+
     })
   }
 
