@@ -21,10 +21,8 @@ update tests?
 */
 
 
-const WebClient = require("@slack/client").WebClient
-
-interface Channel {
-  id: string,
+interface Catalog {
+  guid: string,
   label: string,
 }
 
@@ -46,40 +44,41 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async execute(request: Hub.ActionRequest) {
     return new Promise<Hub.ActionResponse>((resolve, reject) => {
+      console.log(request, resolve, reject)
 
-      if (!request.attachment || !request.attachment.dataBuffer) {
-        reject("Couldn't get data from attachment.")
-        return
-      }
+      // if (!request.attachment || !request.attachment.dataBuffer) {
+      //   reject("Couldn't get data from attachment.")
+      //   return
+      // }
 
-      if (!request.formParams || !request.formParams.channel) {
-        reject("Missing channel.")
-        return
-      }
+      // if (!request.formParams || !request.formParams.channel) {
+      //   reject("Missing channel.")
+      //   return
+      // }
 
-      const slack = this.slackClientFromRequest(request)
+      // const slack = this.slackClientFromRequest(request)
 
-      const fileName = request.formParams.filename || request.suggestedFilename()
+      // const fileName = request.formParams.filename || request.suggestedFilename()
 
-      const options = {
-        file: {
-          value: request.attachment.dataBuffer,
-          options: {
-            filename: fileName,
-          },
-        },
-        channels: request.formParams.channel,
-        filetype: request.attachment.fileExtension,
-        initial_comment: request.formParams.initial_comment,
-      }
+      // const options = {
+      //   file: {
+      //     value: request.attachment.dataBuffer,
+      //     options: {
+      //       filename: fileName,
+      //     },
+      //   },
+      //   channels: request.formParams.channel,
+      //   filetype: request.attachment.fileExtension,
+      //   initial_comment: request.formParams.initial_comment,
+      // }
 
-      let response
-      slack.files.upload(fileName, options, (err: any) => {
-        if (err) {
-          response = { success: true, message: err.message }
-        }
-      })
-      resolve(new Hub.ActionResponse(response))
+      // let response
+      // slack.files.upload(fileName, options, (err: any) => {
+      //   if (err) {
+      //     response = { success: true, message: err.message }
+      //   }
+      // })
+      // resolve(new Hub.ActionResponse(response))
     })
   }
 
@@ -89,6 +88,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const bearer_token = await this.getBearerToken(request)
     console.log('bearer_token', bearer_token)
     const catalogs = await this.getCatalogs(bearer_token)
+    console.log('catalogs', catalogs)
 
     form.fields = [
       {
@@ -153,7 +153,36 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async getCatalogs(bearer_token: string) {
+    return new Promise<Catalog[]>((resolve, reject) => {
 
+      const options = {
+        method: 'GET',
+        uri: 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25',
+        headers: {
+          'Authorization': 'Bearer ' + bearer_token,
+          'Accept': 'application/json',
+          'X-OpenID-Connect-ID-Token': 'Bearer',
+        },
+        json: true
+      }
+
+      req(options)
+      .then(response => {
+        try {
+          const catalogs: Catalog[] = response.catalogs.map((catalog: any) => {
+            return {
+              guid: catalog.metadata.guid,
+              label: catalog.entity.name,
+            }
+          })
+          resolve(catalogs)
+        } catch (err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
+
+    })
   }
 
   // async xform(request: Hub.ActionRequest) {
@@ -180,50 +209,50 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   //   return form
   // }
 
-  async usableChannels(request: Hub.ActionRequest) {
-    let channels = await this.usablePublicChannels(request)
-    channels = channels.concat(await this.usableDMs(request))
-    return channels
-  }
+  // async usableChannels(request: Hub.ActionRequest) {
+  //   let channels = await this.usablePublicChannels(request)
+  //   channels = channels.concat(await this.usableDMs(request))
+  //   return channels
+  // }
 
-  async usablePublicChannels(request: Hub.ActionRequest) {
-    return new Promise<Channel[]>((resolve, reject) => {
-      const slack = this.slackClientFromRequest(request)
-      slack.channels.list({
-        exclude_archived: 1,
-        exclude_members: 1,
-      }, (err: any, response: any) => {
-        if (err || !response.ok) {
-          reject(err)
-        } else {
-          const channels = response.channels.filter((c: any) => c.is_member && !c.is_archived)
-          const reformatted: Channel[] = channels.map((channel: any) => ({ id: channel.id, label: `#${channel.name}` }))
-          resolve(reformatted)
-        }
-      })
-    })
-  }
+  // async usablePublicChannels(request: Hub.ActionRequest) {
+  //   return new Promise<Channel[]>((resolve, reject) => {
+  //     const slack = this.slackClientFromRequest(request)
+  //     slack.channels.list({
+  //       exclude_archived: 1,
+  //       exclude_members: 1,
+  //     }, (err: any, response: any) => {
+  //       if (err || !response.ok) {
+  //         reject(err)
+  //       } else {
+  //         const channels = response.channels.filter((c: any) => c.is_member && !c.is_archived)
+  //         const reformatted: Channel[] = channels.map((channel: any) => ({ id: channel.id, label: `#${channel.name}` }))
+  //         resolve(reformatted)
+  //       }
+  //     })
+  //   })
+  // }
 
-  async usableDMs(request: Hub.ActionRequest) {
-    return new Promise<Channel[]>((resolve, reject) => {
-      const slack = this.slackClientFromRequest(request)
-      slack.users.list({}, (err: any, response: any) => {
-        if (err || !response.ok) {
-          reject(err)
-        } else {
-          const users = response.members.filter((u: any) => {
-            return !u.is_restricted && !u.is_ultra_restricted && !u.is_bot && !u.deleted
-          })
-          const reformatted: Channel[] = users.map((user: any) => ({ id: user.id, label: `@${user.name}` }))
-          resolve(reformatted)
-        }
-      })
-    })
-  }
+  // async usableDMs(request: Hub.ActionRequest) {
+  //   return new Promise<Channel[]>((resolve, reject) => {
+  //     const slack = this.slackClientFromRequest(request)
+  //     slack.users.list({}, (err: any, response: any) => {
+  //       if (err || !response.ok) {
+  //         reject(err)
+  //       } else {
+  //         const users = response.members.filter((u: any) => {
+  //           return !u.is_restricted && !u.is_ultra_restricted && !u.is_bot && !u.deleted
+  //         })
+  //         const reformatted: Channel[] = users.map((user: any) => ({ id: user.id, label: `@${user.name}` }))
+  //         resolve(reformatted)
+  //       }
+  //     })
+  //   })
+  // }
 
-  private slackClientFromRequest(request: Hub.ActionRequest) {
-    return new WebClient(request.params.slack_api_token!)
-  }
+  // private slackClientFromRequest(request: Hub.ActionRequest) {
+  //   return new WebClient(request.params.slack_api_token!)
+  // }
 
 }
 
