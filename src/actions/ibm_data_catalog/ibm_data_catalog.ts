@@ -1,6 +1,10 @@
 import * as Hub from "../../hub"
 import * as req from "request-promise-native"
 
+const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
+const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25'
+const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/assets'
+
 /*
 - define asset types for looker_look and looker_dashboard
 
@@ -38,27 +42,26 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     name: "ibm_cloud_api_key",
     label: "IBM Cloud API Key",
     required: true,
-    description: "Visit https://console-regional.ng.bluemix.net/#overview and go to Manage > Security > Platform API Keys",
+    description: "Visit https://console-regional.ng.bluemix.net/#overview and go to Manage > Security > Platform API Keys.",
     sensitive: true,
   }]
 
   async execute(request: Hub.ActionRequest) {
     return new Promise<Hub.ActionResponse>((resolve, reject) => {
-      console.log(request, resolve, reject)
 
-      // if (!request.attachment || !request.attachment.dataBuffer) {
-      //   reject("Couldn't get data from attachment.")
-      //   return
-      // }
+      if (!request.attachment || !request.attachment.dataBuffer) {
+        reject("Couldn't get data from attachment.")
+        return
+      }
 
-      // if (!request.formParams || !request.formParams.channel) {
-      //   reject("Missing channel.")
-      //   return
-      // }
+      if (!request.formParams || !request.formParams.catalog) {
+        reject("Missing catalog.")
+        return
+      }
 
-      // const slack = this.slackClientFromRequest(request)
+      console.log('dataBuffer', request.attachment.dataBuffer)
 
-      // const fileName = request.formParams.filename || request.suggestedFilename()
+      resolve()
 
       // const options = {
       //   file: {
@@ -94,21 +97,21 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       {
         description: "Name of the catalog to send to",
         label: "Send to",
-        name: "Catalog",
+        name: "catalog",
         options: catalogs.map((catalog) => ({ name: catalog.guid, label: catalog.label })),
         required: true,
         type: "select",
       },
-      {
-        label: "Comment",
-        type: "string",
-        name: "initial_comment",
-      },
-      {
-        label: "Filename",
-        name: "filename",
-        type: "string",
-      },
+      // {
+      //   label: "Comment",
+      //   type: "string",
+      //   name: "initial_comment",
+      // },
+      // {
+      //   label: "Filename",
+      //   name: "filename",
+      //   type: "string",
+      // },
     ]
 
     return form
@@ -127,7 +130,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const options = {
       method: 'POST',
-      uri: 'https://iam.ng.bluemix.net/identity/token',
+      uri: BEARER_TOKEN_URI,
       form: data,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -156,7 +159,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'GET',
-        uri: 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25',
+        uri: CATALOGS_URI,
         headers: {
           'Authorization': 'Bearer ' + bearer_token,
           'Accept': 'application/json',
