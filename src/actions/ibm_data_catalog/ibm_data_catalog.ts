@@ -138,7 +138,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       .then(response => {
         try {
           const data = JSON.parse(response)
-          if (response.access_token) return resolve(data.access_token)
+          console.log('data', data)
+          if (data.access_token) return resolve(data.access_token)
           throw new Error('response does not include access_token')
         } catch(err) {
           reject(err)
