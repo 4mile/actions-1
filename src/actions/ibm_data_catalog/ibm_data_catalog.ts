@@ -1,6 +1,5 @@
 import * as Hub from "../../hub"
 import * as req from "request-promise-native"
-import * as qs from 'querystringify'
 
 /*
 - define asset types for looker_look and looker_dashboard
@@ -89,10 +88,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const form = new Hub.ActionForm()
     const bearer_token = await this.getBearerToken(request)
     console.log('bearer_token', bearer_token)
+    const catalogs = await this.getCatalogs(bearer_token)
 
     form.fields = [
       {
-        description: "Name of the catalog to send to",
+        // description: "Name of the catalog to send to",
+        description: bearer_token.substring(0, 20),
         label: "Send to",
         name: "Catalog",
         options: [],
@@ -127,19 +128,20 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const options = {
       method: 'POST',
-      uri: 'https://iam.ng.bluemix.net/identity/token?' + qs.stringify(data),
+      uri: 'https://iam.ng.bluemix.net/identity/token',
+      form: data,
       headers: {
-        'content-type': 'application/x-www-form-urlencoded'
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+      },
+      json: true
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       req(options)
       .then(response => {
         try {
-          const data = JSON.parse(response)
-          console.log('data', data)
-          if (data.access_token) return resolve(data.access_token)
+          if (response.access_token) return resolve(response.access_token)
           throw new Error('response does not include access_token')
         } catch(err) {
           reject(err)
@@ -148,6 +150,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       .catch(reject)
 
     })
+  }
+
+  async getCatalogs(bearer_token: string) {
+
   }
 
   // async xform(request: Hub.ActionRequest) {
