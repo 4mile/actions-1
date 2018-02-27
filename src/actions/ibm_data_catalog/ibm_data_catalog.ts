@@ -7,8 +7,8 @@ const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
 const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25'
 const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/assets'
 
-function log() {
-  console.log.apply(console, arguments)
+function log(...args: any[]) {
+  console.log.apply(console, args)
 }
 
 /*
@@ -65,6 +65,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     return new Promise<Hub.ActionResponse>((resolve, reject) => {
 
+      log('Object.keys(request.attachment)', Object.keys(request.attachment))
       const buffer = request.attachment && request.attachment.dataBuffer
       if (! buffer) {
         reject("Couldn't get data from attachment.")
@@ -79,6 +80,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       let response
       try {
+        log('buffer.toString()', buffer.toString())
         const json = JSON.parse(buffer.toString())
         delete json.data
         console.log('json', json)
