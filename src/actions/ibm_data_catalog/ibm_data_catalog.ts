@@ -2,16 +2,16 @@ import * as Hub from "../../hub"
 import * as req from "request-promise-native"
 
 const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
-const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25'
-const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/assets'
+const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/catalogs?limit=25'
+const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/assets'
 
 /*
 - define asset types for looker_look and looker_dashboard
 
 update form method
-- get bearer token
-- get list of catalogs
-- display catalogs as destinations
+- √ get bearer token
+- √ get list of catalogs
+- √ display catalogs as destinations
 
 update execute method
 - parse asset type
@@ -55,30 +55,30 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }]
 
   async execute(request: Hub.ActionRequest) {
+    const bearer_token = await this.getBearerToken(request)
+
     return new Promise<Hub.ActionResponse>((resolve, reject) => {
 
-      if (!request.attachment || !request.attachment.dataBuffer) {
+      const buffer = request.attachment && request.attachment.dataBuffer
+      if (! buffer) {
         reject("Couldn't get data from attachment.")
         return
       }
-      console.log('request.attachment')
-      console.log(typeof request.attachment)
-      console.log(request.attachment)
-      console.log(JSON.stringify(request.attachment))
 
-
-      if (!request.formParams || !request.formParams.catalog) {
+      const catalog = request.formParams && request.formParams.catalog
+      if (! catalog) {
         reject("Missing catalog.")
         return
       }
 
-      console.log('dataBuffer keys', request.attachment.dataBuffer.keys())
-      console.log('dataBuffer entries', request.attachment.dataBuffer.entries())
-      console.log('dataBuffer toString', request.attachment.dataBuffer.toString())
-      console.log('dataBuffer toJSON', request.attachment.dataBuffer.toJSON())
-
       let response
-      // TODO do stuff
+      try {
+        const json = JSON.parse(buffer.toString())
+        delete json.data
+        console.log('json', json)
+      } catch (err) {
+        response = { success: false, message: err.message }
+      }
       resolve(new Hub.ActionResponse(response))
 
       // const options = {
@@ -104,12 +104,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async form(request: Hub.ActionRequest) {
-    console.log('request params', request.params)
     const form = new Hub.ActionForm()
-    const bearer_token = await this.getBearerToken(request)
-    console.log('bearer_token', bearer_token)
-    const catalogs = await this.getCatalogs(bearer_token)
-    console.log('catalogs', catalogs)
+    const catalogs = await this.getCatalogs(request)
 
     form.fields = [
       {
@@ -135,7 +131,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return form
   }
 
-  async getBearerToken(request: Hub.ActionRequest) {
+  private async getBearerToken(request: Hub.ActionRequest) {
     // obtain a bearer token using an IBM Cloud API Key
 
     // curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&response_type=cloud_iam&apikey=ps2q46n3fjEYFhGefwHla2pCZBR1BHTWpCPxjVHBlfzb" "https://iam.ng.bluemix.net/identity/token"
@@ -172,7 +168,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async getCatalogs(bearer_token: string) {
+  async getCatalogs(request: Hub.ActionRequest) {
+    const bearer_token = await this.getBearerToken(request)
+
     return new Promise<Catalog[]>((resolve, reject) => {
 
       const options = {
