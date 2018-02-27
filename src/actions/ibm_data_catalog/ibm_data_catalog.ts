@@ -115,6 +115,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const form = new Hub.ActionForm()
     const catalogs = await this.getCatalogs(request)
 
+    log('request', JSON.stringify(request))
+
     form.fields = [
       {
         description: "Name of the catalog to send to",
