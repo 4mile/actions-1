@@ -2,7 +2,9 @@ import * as Hub from "../../hub"
 import * as req from "request-promise-native"
 
 const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
-const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/catalogs?limit=25'
+
+// NOTE: getting catalogs: null when using v3 of this endpoint
+const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25'
 const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/assets'
 
 function log() {
