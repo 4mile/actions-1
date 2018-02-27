@@ -114,8 +114,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async form(request: Hub.ActionRequest) {
     const form = new Hub.ActionForm()
-    // const catalogs = await this.getCatalogs(request)
-    const catalogs: Catalog[] = []
+    const catalogs = await this.getCatalogs(request)
 
     form.fields = [
       {
