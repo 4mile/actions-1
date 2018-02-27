@@ -74,8 +74,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       console.log('dataBuffer keys', request.attachment.dataBuffer.keys())
       console.log('dataBuffer entries', request.attachment.dataBuffer.entries())
+      console.log('dataBuffer toString', request.attachment.dataBuffer.toString())
+      console.log('dataBuffer toJSON', request.attachment.dataBuffer.toJSON())
 
-      resolve()
+      let response
+      // TODO do stuff
+      resolve(new Hub.ActionResponse(response))
 
       // const options = {
       //   file: {
