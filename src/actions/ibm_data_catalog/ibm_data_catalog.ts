@@ -61,6 +61,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         reject("Couldn't get data from attachment.")
         return
       }
+      console.log('request.attachment')
+      console.log(typeof request.attachment)
+      console.log(request.attachment)
+      console.log(JSON.stringify(request.attachment))
+
 
       if (!request.formParams || !request.formParams.catalog) {
         reject("Missing catalog.")
