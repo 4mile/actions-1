@@ -1,0 +1,107 @@
+// looker_look input
+
+{
+    "id": null,
+    "supports_pivot_in_db": true,
+    "null_sort_treatment": "high",
+    "from_cache": true,
+    "expired": false,
+    "ran_at": "2018-02-27T15:53:19+00:00",
+    "span": {
+        "operation_name": "RUN_QUERY",
+        "context": {
+            "trace_id": "469d8bef5f860d011fe62191ec1dbb23",
+            "span_id": "469d8bef5f860d011fe62191ec1dbb23"
+        },
+        "start_time": 1519747635779,
+        "end_time": 1519747635941
+    },
+    "sql": "SELECT \n\tCOUNT(*) AS \"flights.count\"\nFROM flights  AS flights\n\nLIMIT 500",
+    "sql_explain": "EXPLAIN SELECT \n\tCOUNT(*) AS \"flights.count\"\nFROM flights  AS flights\n\nLIMIT 500",
+    "fields": {
+        "measures": [
+            {
+                "align": "right",
+                "can_filter": true,
+                "category": "measure",
+                "default_filter_value": null,
+                "description": null,
+                "enumerations": null,
+                "field_group_label": null,
+                "fill_style": null,
+                "fiscal_month_offset": 0,
+                "has_allowed_values": false,
+                "hidden": false,
+                "is_filter": false,
+                "is_numeric": true,
+                "label": "Flights Count",
+                "label_from_parameter": null,
+                "label_short": "Count",
+                "lookml_link": "/projects/faa/files/flights.view.lkml?line=40",
+                "map_layer": null,
+                "name": "flights.count",
+                "requires_refresh_on_sort": false,
+                "sortable": true,
+                "suggestions": null,
+                "supported_measure_types": [],
+                "tags": [],
+                "type": "count",
+                "user_attribute_filter_types": [
+                    "number",
+                    "advanced_filter_number"
+                ],
+                "value_format": null,
+                "view": "flights",
+                "view_label": "Flights",
+                "dynamic": false,
+                "error": null,
+                "field_group_variant": "Count",
+                "measure": true,
+                "parameter": false,
+                "primary_key": false,
+                "project_name": "faa",
+                "scope": "flights",
+                "source_file": "flights.view.lkml",
+                "source_file_path": "faa/flights.view.lkml",
+                "suggest_dimension": "flights.count",
+                "suggest_explore": "flights",
+                "suggestable": false,
+                "is_timeframe": false,
+                "can_time_filter": false,
+                "time_interval": null,
+                "sql": null,
+                "sql_case": null
+            }
+        ],
+        "dimensions": [],
+        "table_calculations": [],
+        "pivots": []
+    },
+    "fill_fields": [],
+    "has_totals": false,
+    "has_row_totals": false,
+    "applied_filters": {},
+    "applied_filter_expression": null,
+    "explore": {
+        "name": "flights",
+        "label": "Flights",
+        "description": "Start here for information about flights!"
+    },
+    "timezone": "America/Los_Angeles",
+    "data": [
+        {
+            "flights.count": {
+                "value": 38477044,
+                "rendered": "38,477,044",
+                "links": [
+                    {
+                        "label": "Show All 38,477,044",
+                        "url": "/explore/faa/flights?fields=flights.distance,flights.origin,flights.destination,flights.arrival_status&limit=500",
+                        "type": "measure_default"
+                    }
+                ]
+            }
+        }
+    ],
+    "drill_menu_build_time": 0.07214799999999999
+}
