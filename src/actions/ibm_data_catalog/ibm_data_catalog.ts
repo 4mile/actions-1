@@ -5,6 +5,10 @@ const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
 const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/catalogs?limit=25'
 const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/assets'
 
+function log() {
+  console.log.apply(console, arguments)
+}
+
 /*
 - define asset types for looker_look and looker_dashboard
 
@@ -170,6 +174,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async getCatalogs(request: Hub.ActionRequest) {
     const bearer_token = await this.getBearerToken(request)
+    log('bearer_token', bearer_token)
 
     return new Promise<Catalog[]>((resolve, reject) => {
 
