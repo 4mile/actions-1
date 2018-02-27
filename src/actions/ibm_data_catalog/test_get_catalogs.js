@@ -7,7 +7,7 @@ const bearer_token = 'eyJraWQiOiIyMDE3MTAzMC0wMDowMDowMCIsImFsZyI6IlJTMjU2In0.ey
 
 const options = {
   method: 'GET',
-  uri: 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25',
+  uri: 'https://catalogs-yp-prod.mybluemix.net:443/v3/catalogs?limit=25',
   headers: {
     'Authorization': 'Bearer ' + bearer_token,
     'Accept': 'application/json',

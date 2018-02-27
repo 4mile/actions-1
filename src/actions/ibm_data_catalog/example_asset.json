@@ -1,0 +1,59 @@
+{
+  "metadata": {
+    "name": "Test Asset",
+    "description": "Test Description",
+    "tags": "[\"tag1\", \"tag2\", \"tag3\"]",
+    "asset_type": "string",
+    "origin_country": "us",
+    "rating": 0,
+    "privacy": {
+      "mode": "PUBLIC"
+    },
+    "asset_state": "available",
+    "catalog_id": "string",
+    "project_id": "string",
+    "created_at": "string",
+    "owner": "string",
+    "size": 0,
+    "version": 0,
+    "usage": {
+      "last_updater": "string",
+      "access_count": 0,
+      "last_accessor": "string",
+      "last_accessed_at": "string",
+      "last_updated_at": "string"
+    },
+    "asset_id": "string",
+    "source_asset": {
+      "catalog_id": "string",
+      "action": "string",
+      "asset_id": "string"
+    }
+  },
+  "attachments": [
+    {
+      "attachment_id": "string",
+      "asset_type": "string",
+      "name": "string",
+      "description": "string",
+      "mime": "string",
+      "size": 0,
+      "transfer_complete": true,
+      "user_data": {},
+      "connection_id": "string",
+      "connection_path": "string",
+      "creator": "string",
+      "created_at": "string",
+      "usage": {
+        "last_updater": "string",
+        "access_count": 0,
+        "last_accessor": "string",
+        "last_accessed_at": "string",
+        "last_updated_at": "string"
+      }
+    }
+  ],
+  "asset_id": "string",
+  "href": "string",
+  "entity": {}
+}

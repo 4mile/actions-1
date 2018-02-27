@@ -5,7 +5,7 @@ const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
 
 // NOTE: getting catalogs: null when using v3 of this endpoint
 const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25'
-const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/assets'
+// const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/assets'
 
 function log(...args: any[]) {
   console.log.apply(console, args)
@@ -50,7 +50,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   label = "IBM Data Catalog"
   iconName = "ibm_data_catalog/ibm_logo.png"
   description = "Add an asset to an IBM Data Catalog"
-  supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
+  supportedActionTypes = [Hub.ActionType.Query]
+  supported_formats = ['json_detail']
   requiredFields = []
   params = [{
     name: "ibm_cloud_api_key",
@@ -61,7 +62,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }]
 
   async execute(request: Hub.ActionRequest) {
-    const bearer_token = await this.getBearerToken(request)
+    // const bearer_token = await this.getBearerToken(request)
 
     return new Promise<Hub.ActionResponse>((resolve, reject) => {
 
@@ -113,9 +114,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async form(request: Hub.ActionRequest) {
     const form = new Hub.ActionForm()
-    const catalogs = await this.getCatalogs(request)
-
-    log('request', JSON.stringify(request))
+    // const catalogs = await this.getCatalogs(request)
+    const catalogs: Catalog[] = []
 
     form.fields = [
       {

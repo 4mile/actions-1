@@ -1,6 +1,5 @@
-// looker_look input
-
 {
+    "__COMMENT__": "looker_look input data",
     "id": null,
     "supports_pivot_in_db": true,
     "null_sort_treatment": "high",

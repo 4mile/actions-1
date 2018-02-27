@@ -1,0 +1,16 @@
+{
+  "metadata": {
+    "name": "Test Looker Look",
+    "description": "Test Description",
+    "asset_type": "looker_look",
+    "origin_country": "us",
+    "rating": 0
+  },
+  "entity": {
+  	"looker_look": {
+  		"looker_data": {
+  			"foo": "bar"
+  		}
+  	}
+  }
+}

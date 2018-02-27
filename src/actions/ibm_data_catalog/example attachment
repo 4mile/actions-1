@@ -1,0 +1,6 @@
+request.attachment: {
+    mime: 'application/zip;base64',
+    fileExtension: 'csv_zip',
+    encoding: 'base64',
+    dataBuffer: <Buffer 50 4b ...
+}
