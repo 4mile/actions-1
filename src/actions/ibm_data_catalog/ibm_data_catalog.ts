@@ -50,8 +50,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   label = "IBM Data Catalog"
   iconName = "ibm_data_catalog/ibm_logo.png"
   description = "Add an asset to an IBM Data Catalog"
-  supportedActionTypes = [Hub.ActionType.Query]
-  supportedFormats = [Hub.ActionFormat.JsonDetail]
+  supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
+  supportedFormats = [Hub.ActionFormat.JsonDetail, Hub.ActionFormat.Csv, Hub.ActionFormat.Txt]
   requiredFields = []
   params = [{
     name: "ibm_cloud_api_key",
@@ -125,16 +125,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         required: true,
         type: "select",
       },
-      // {
-      //   label: "Comment",
-      //   type: "string",
-      //   name: "initial_comment",
-      // },
-      // {
-      //   label: "Filename",
-      //   name: "filename",
-      //   type: "string",
-      // },
+      {
+        label: "Description",
+        type: "string",
+        name: "looker_asset_description",
+      },
     ]
 
     return form
