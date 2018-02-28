@@ -1,0 +1,77 @@
+// a look request
+// request.type query
+// handleLookRequest
+// ----------------------------------------
+{
+  "formParams": {
+    "catalog": "74cb53fa-aa75-42ea-8a4b-3a82a96272d3",
+    "looker_asset_description": "a look"
+  },
+  "params": {
+    "ibm_cloud_api_key": "ps2q46n3fjEYFhGefwHla2pCZBR1BHTWpCPxjVHBlfzb"
+  },
+  "lookerVersion": "5.8.6",
+  "type": "query",
+  "attachment": {
+    "mime": "application/json",
+    "fileExtension": "json_detail",
+    "encoding": "utf8",
+  },
+  "scheduledPlan": {
+    "filtersDifferFromLook": false,
+    "queryId": 939,
+    "query": {
+      "id": 939,
+      "view": "order_items",
+      "fields": [
+        "inventory_items.cost",
+        "inventory_items.id",
+        "inventory_items.product_brand",
+        "inventory_items.product_category",
+        "inventory_items.created_date"
+      ],
+      "pivots": null,
+      "fill_fields": null,
+      "filters": null,
+      "filter_expression": null,
+      "sorts": [
+        "inventory_items.created_date desc"
+      ],
+      "limit": "10",
+      "column_limit": null,
+      "total": null,
+      "row_total": null,
+      "runtime": null,
+      "vis_config": {
+        "type": "table",
+        "show_view_names": true,
+        "show_row_numbers": true,
+        "truncate_column_names": false,
+        "hide_totals": false,
+        "hide_row_totals": false,
+        "table_theme": "editable",
+        "limit_displayed_rows": false,
+        "enable_conditional_formatting": false,
+        "conditional_formatting_include_totals": false,
+        "conditional_formatting_include_nulls": false
+      },
+      "filter_config": null,
+      "visible_ui_sections": null,
+      "slug": "6sntQJm",
+      "dynamic_fields": null,
+      "client_id": "M4jjgyvm3oBA23u57Ame5K",
+      "share_url": "https://4mile.looker.com/x/M4jjgyvm3oBA23u57Ame5K",
+      "expanded_share_url": "https://4mile.looker.com/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_date&sorts=inventory_items.created_date+desc&limit=10&query_timezone=America%2FLos_Angeles&vis=%7B%22type%22%3A%22table%22%2C%22show_view_names%22%3Atrue%2C%22show_row_numbers%22%3Atrue%2C%22truncate_column_names%22%3Afalse%2C%22hide_totals%22%3Afalse%2C%22hide_row_totals%22%3Afalse%2C%22table_theme%22%3A%22editable%22%2C%22limit_displayed_rows%22%3Afalse%2C%22enable_conditional_formatting%22%3Afalse%2C%22conditional_formatting_include_totals%22%3Afalse%2C%22conditional_formatting_include_nulls%22%3Afalse%7D&origin=share-expanded",
+      "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_date&sorts=inventory_items.created_date+desc&limit=10&query_timezone=America%2FLos_Angeles&vis=%7B%22type%22%3A%22table%22%2C%22show_view_names%22%3Atrue%2C%22show_row_numbers%22%3Atrue%2C%22truncate_column_names%22%3Afalse%2C%22hide_totals%22%3Afalse%2C%22hide_row_totals%22%3Afalse%2C%22table_theme%22%3A%22editable%22%2C%22limit_displayed_rows%22%3Afalse%2C%22enable_conditional_formatting%22%3Afalse%2C%22conditional_formatting_include_totals%22%3Afalse%2C%22conditional_formatting_include_nulls%22%3Afalse%7D",
+      "query_timezone": "America/Los_Angeles",
+      "has_table_calculations": false,
+      "model": "ecommerce"
+    },
+    "scheduledPlanId": 25,
+    "title": "Test Look",
+    "type": "Look",
+    "url": "https://4mile.looker.com/looks/7?qid=M4jjgyvm3oBA23u57Ame5K"
+  },
+  "instanceId": "9a025967bab717ddee35421b5ac4e77a",
+  "webhookId": "3995778d38cf6f3106f647433836021c"
+}

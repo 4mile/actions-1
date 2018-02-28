@@ -1,0 +1,31 @@
+// a dashboard request
+// request.type query
+// handleLookRequest
+// ----------------------------------------
+{
+  "formParams": {
+    "catalog": "74cb53fa-aa75-42ea-8a4b-3a82a96272d3",
+    "looker_asset_description": "a dashboard"
+  },
+  "params": {
+    "ibm_cloud_api_key": "ps2q46n3fjEYFhGefwHla2pCZBR1BHTWpCPxjVHBlfzb"
+  },
+  "lookerVersion": "5.8.6",
+  "type": "query",
+  "attachment": {
+    "mime": "application/zip;base64",
+    "fileExtension": "csv_zip",
+    "encoding": "base64"
+  },
+  "scheduledPlan": {
+    "filtersDifferFromLook": null,
+    "queryId": null,
+    "query": null,
+    "scheduledPlanId": 23,
+    "title": "Test Dashboard",
+    "type": "Dashboard",
+    "url": "https://4mile.looker.com/dashboards/5"
+  },
+  "instanceId": "9a025967bab717ddee35421b5ac4e77a",
+  "webhookId": "115dca63174579a01df57c80812b4ef2"
+}
