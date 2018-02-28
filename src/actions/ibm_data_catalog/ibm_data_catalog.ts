@@ -62,8 +62,31 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }]
 
   async execute(request: Hub.ActionRequest) {
-    // const bearer_token = await this.getBearerToken(request)
+    log('request.type', request.type)
+    switch (request.type) {
+      case Hub.ActionType.Query:
+        return this.handleLookRequest(request)
+      case Hub.ActionType.Dashboard:
+        return this.handleDashboardRequest(request)
+      default:
+        // should never happen
+        return Promise.reject('Invalid request.type')
+    }
+  }
 
+  async handleLookRequest(request: Hub.ActionRequest) {
+    log('handleLookRequest')
+    // const bearer_token = await this.getBearerToken(request)
+    return this.debugRequest(request)
+  }
+
+  async handleDashboardRequest(request: Hub.ActionRequest) {
+    log('handleDashboardRequest')
+    // const bearer_token = await this.getBearerToken(request)
+    return this.debugRequest(request)
+  }
+
+  async debugRequest(request: Hub.ActionRequest) {
     return new Promise<Hub.ActionResponse>((resolve, reject) => {
 
       const request_info = Object.assign({}, request)
