@@ -51,7 +51,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   iconName = "ibm_data_catalog/ibm_logo.png"
   description = "Add an asset to an IBM Data Catalog"
   supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
-  supportedFormats = [Hub.ActionFormat.JsonDetail, Hub.ActionFormat.Csv, Hub.ActionFormat.Txt]
+  xsupportedFormats = [Hub.ActionFormat.JsonDetail, Hub.ActionFormat.Csv, Hub.ActionFormat.Txt]
   requiredFields = []
   params = [{
     name: "ibm_cloud_api_key",
