@@ -34,6 +34,7 @@ export enum IntegrationSupportedActionTypes {
 export enum IntegrationSupportedFormats {
   Txt = 'txt',
   Csv = 'csv',
+  CsvZip = 'csv_zip',
   InlineJson = 'inline_json',
   Json = 'json',
   JsonDetail = 'json_detail',

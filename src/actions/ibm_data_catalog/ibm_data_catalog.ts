@@ -51,7 +51,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   iconName = "ibm_data_catalog/ibm_logo.png"
   description = "Add an asset to an IBM Data Catalog"
   supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
-  supportedFormats = [Hub.ActionFormat.Csv]
+  supportedFormats = [Hub.ActionFormat.Csv, Hub.ActionFormat.CsvZip]
   requiredFields = []
   params = [{
     name: "ibm_cloud_api_key",
@@ -77,47 +77,53 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async handleLookRequest(request: Hub.ActionRequest) {
     log('handleLookRequest')
     // const bearer_token = await this.getBearerToken(request)
-    return this.debugRequest(request)
+    this.debugRequest(request)
+
+    return new Promise<Hub.ActionResponse>((resolve, reject) => {
+      resolve(new Hub.ActionResponse())
+    })
   }
 
   async handleDashboardRequest(request: Hub.ActionRequest) {
     log('handleDashboardRequest')
     // const bearer_token = await this.getBearerToken(request)
-    return this.debugRequest(request)
+    this.debugRequest(request)
+
+    return new Promise<Hub.ActionResponse>((resolve, reject) => {
+      resolve(new Hub.ActionResponse())
+    })
   }
 
   async debugRequest(request: Hub.ActionRequest) {
-    return new Promise<Hub.ActionResponse>((resolve, reject) => {
+    const request_info = Object.assign({}, request)
+    request_info.attachment = Object.assign({}, request.attachment)
+    delete request_info.attachment.dataBuffer
+    log('-'.repeat(40))
+    log(JSON.stringify(request_info, null, 2))
+    log('-'.repeat(40))
 
-      const request_info = Object.assign({}, request)
-      request_info.attachment = Object.assign({}, request.attachment)
-      delete request_info.attachment.dataBuffer
-      log('-'.repeat(40))
-      log(JSON.stringify(request_info, null, 2))
-      log('-'.repeat(40))
+      // const buffer = request.attachment && request.attachment.dataBuffer
+      // if (! buffer) {
+      //   reject("Couldn't get data from attachment.")
+      //   return
+      // }
 
-      const buffer = request.attachment && request.attachment.dataBuffer
-      if (! buffer) {
-        reject("Couldn't get data from attachment.")
-        return
-      }
+      // const catalog = request.formParams && request.formParams.catalog
+      // if (! catalog) {
+      //   reject("Missing catalog.")
+      //   return
+      // }
 
-      const catalog = request.formParams && request.formParams.catalog
-      if (! catalog) {
-        reject("Missing catalog.")
-        return
-      }
-
-      let response
-      try {
-        log('buffer.toString()', buffer.toString())
-        const json = JSON.parse(buffer.toString())
-        delete json.data
-        console.log('json', json)
-      } catch (err) {
-        response = { success: false, message: err.message }
-      }
-      resolve(new Hub.ActionResponse(response))
+      // let response
+      // try {
+      //   log('buffer.toString()', buffer.toString())
+      //   const json = JSON.parse(buffer.toString())
+      //   delete json.data
+      //   console.log('json', json)
+      // } catch (err) {
+      //   response = { success: false, message: err.message }
+      // }
+      // resolve(new Hub.ActionResponse(response))
 
       // const options = {
       //   file: {
@@ -138,11 +144,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       //   }
       // })
       // resolve(new Hub.ActionResponse(response))
-    })
   }
 
   async form(request: Hub.ActionRequest) {
-    log('request.type', request.type)
+    this.debugRequest(request)
 
     const form = new Hub.ActionForm()
     const catalogs = await this.getCatalogs(request)
@@ -161,7 +166,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         type: "string",
         name: "looker_asset_description",
         default: "Describe this item",
-        description: "Description",
+        description: "optional",
       },
     ]
 
