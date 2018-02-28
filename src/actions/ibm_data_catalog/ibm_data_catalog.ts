@@ -66,7 +66,13 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     return new Promise<Hub.ActionResponse>((resolve, reject) => {
 
-      log('request.attachment', request.attachment)
+      const request_info = Object.assign({}, request)
+      request_info.attachment = Object.assign({}, request.attachment)
+      delete request_info.attachment.dataBuffer
+      log('-'.repeat(40))
+      log(JSON.stringify(request_info, null, 2))
+      log('-'.repeat(40))
+
       const buffer = request.attachment && request.attachment.dataBuffer
       if (! buffer) {
         reject("Couldn't get data from attachment.")
