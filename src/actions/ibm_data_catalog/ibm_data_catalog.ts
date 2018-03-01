@@ -63,7 +63,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async execute(request: Hub.ActionRequest) {
     log('request.type', request.type)
-    switch (request.type) {
+    const type = this.determineRequestType(request)
+
+    switch (type) {
       case Hub.ActionType.Query:
         return this.handleLookRequest(request)
       case Hub.ActionType.Dashboard:
@@ -71,6 +73,24 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       default:
         // should never happen
         return Promise.reject('Invalid request.type')
+    }
+  }
+
+  private determineRequestType(request: Hub.ActionRequest) {
+    // for now using scheduledPlan.type
+    // because request.type is always 'query'
+    const plan_type = (
+      request.scheduledPlan
+      && request.scheduledPlan.type
+    )
+
+    switch (plan_type) {
+      case 'Look':
+        return Hub.ActionType.Query
+      case 'Dashboard':
+        return Hub.ActionType.Dashboard
+      default:
+        throw new Error('Unable to determine request type')
     }
   }
 
@@ -157,7 +177,13 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         description: "Name of the catalog to send to",
         label: "Send to",
         name: "catalog",
-        options: catalogs.map((catalog) => ({ name: catalog.guid, label: catalog.label })),
+        options: catalogs.map((catalog, i) => {
+          return {
+            name: catalog.guid,
+            label: catalog.label,
+            selected: i === 0,
+          }
+        }),
         required: true,
         type: "select",
       },
@@ -206,7 +232,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         }
       })
       .catch(reject)
-
     })
   }
 
