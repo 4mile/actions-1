@@ -1,5 +1,7 @@
 import * as Hub from "../../hub"
-import * as req from "request-promise-native"
+import * as req from "request"
+import * as stream from "stream"
+import * as reqPromise from "request-promise-native"
 
 const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
 
@@ -140,9 +142,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('attachment_id', attachment_id)
     log('attachment_upload_url', attachment_upload_url)
 
-    // // format look data as CSV (for now, input with be constrained to csv)
-    // // PUT CSV to signed PUT URL
-    // await this.uploadLookAttachment(attachment_id, attachment_upload_url, request)
+    // format look data as CSV (for now, input with be constrained to csv)
+    // PUT CSV to signed PUT URL
+    await this.uploadAttachment(attachment_upload_url, transaction)
 
     // // POST to complete endpoint?
     // await this.uploadLookAttachmentComplete(attachment_id, request)
@@ -195,7 +197,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         }
       }
 
-      req(options)
+      reqPromise(options)
       .then(response => {
         try {
           if (! response.asset_id) throw new Error('response does not include access_token')
@@ -229,7 +231,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         }
       }
 
-      req(options)
+      reqPromise(options)
       .then(response => {
         try {
           const attachment_id = response.attachment_id
@@ -245,6 +247,66 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         }
       })
       .catch(reject)
+    })
+  }
+
+  async uploadAttachment(attachment_upload_url: string, transaction: Transaction) {
+    return new Promise<any>((resolve, reject) => {
+
+      const buffer = (
+        transaction.request.attachment
+        && transaction.request.attachment.dataBuffer
+      )
+      if (! buffer) {
+        reject("Couldn't get data from attachment.")
+        return
+      }
+
+      // create a stream from our buffer
+      const bufferStream = new stream.PassThrough()
+      bufferStream.end(buffer)
+
+      // PUT the buffer to the attachment_upload_url
+      bufferStream
+      .pipe(req.put(attachment_upload_url))
+      .end((res) => {
+        log('res', res)
+        resolve(res)
+      })
+
+      // const options = {
+      //   method: 'PUT',
+      //   uri: attachment_upload_url,
+      //   headers: {
+      //     'Accept': 'application/json',
+      //   },
+      //   json: true,
+      //   body: {
+      //     asset_type: 'looker_look',
+      //     name: 'Looker Look Attachment',
+      //     description: 'CSV attachment',
+      //     mime: 'text/csv',
+      //     data_partitions: 1,
+      //     private_url: true
+      //   }
+      // }
+
+      // req(options)
+      // .then(response => {
+      //   try {
+      //     const attachment_id = response.attachment_id
+      //     const attachment_upload_url = response.url1
+      //     if (! attachment_id) throw new Error('response does not include attachment_id')
+      //     if (! attachment_upload_url) throw new Error('response does not include url1')
+      //     resolve({
+      //       attachment_id,
+      //       attachment_upload_url,
+      //     })
+      //   } catch(err) {
+      //     reject(err)
+      //   }
+      // })
+      // .catch(reject)
     })
   }
 
@@ -366,7 +428,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
 
     return new Promise<string>((resolve, reject) => {
-      req(options)
+      reqPromise(options)
       .then(response => {
         try {
           if (response.access_token) return resolve(response.access_token)
@@ -396,7 +458,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         json: true
       }
 
-      req(options)
+      reqPromise(options)
       .then(response => {
         try {
           const catalogs: Catalog[] = response.catalogs.map((catalog: any) => {
