@@ -45,13 +45,10 @@ interface Catalog {
 }
 
 interface Transaction {
-  type?: string,
-  bearer_token?: string,
-  catalog_id?: string,
-  asset_id?: string,
-  attachment_id?: string,
-  attachment_upload_url?: string,
-  request: Hub.ActionRequest
+  request: Hub.ActionRequest,
+  type: string,
+  bearer_token: string,
+  catalog_id: string,
 }
 
 export class IbmDataCatalogAssetAction extends Hub.Action {
@@ -133,12 +130,15 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     this.debugRequest(transaction.request)
 
     // POST looker_look asset with metadata
-    transaction.asset_id = await this.postLookAsset(transaction)
+    const asset_id = await this.postLookAsset(transaction)
 
-    log('transaction.asset_id', transaction.asset_id)
+    log('asset_id', asset_id)
 
     // POST attachment metadata to asset, returns attachment_id and signed PUT URL
-    // const { attachment_id, attachment_upload_url } = await this.postLookAttachment(asset_id, request)
+    const { attachment_id, attachment_upload_url } = await this.postAttachmentToAsset(asset_id, transaction)
+
+    log('attachment_id', attachment_id)
+    log('attachment_upload_url', attachment_upload_url)
 
     // // format look data as CSV (for now, input with be constrained to csv)
     // // PUT CSV to signed PUT URL
@@ -198,8 +198,48 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       req(options)
       .then(response => {
         try {
-          if (response.asset_id) return resolve(response.asset_id)
-          throw new Error('response does not include access_token')
+          if (! response.asset_id) throw new Error('response does not include access_token')
+          resolve(response.asset_id)
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
+    })
+  }
+
+  async postAttachmentToAsset(asset_id: string, transaction: Transaction) {
+    return new Promise<any>((resolve, reject) => {
+
+      const options = {
+        method: 'POST',
+        uri: `${ASSETS_URI}/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
+        headers: {
+          'Authorization': `Bearer ${transaction.bearer_token}`,
+          'Accept': 'application/json',
+        },
+        json: true,
+        body: {
+          asset_type: 'looker_look',
+          name: 'Looker Look Attachment',
+          description: 'CSV attachment',
+          mime: 'text/csv',
+          data_partitions: 1,
+          private_url: true
+        }
+      }
+
+      req(options)
+      .then(response => {
+        try {
+          const attachment_id = response.attachment_id
+          const attachment_upload_url = response.url1
+          if (! attachment_id) throw new Error('response does not include attachment_id')
+          if (! attachment_upload_url) throw new Error('response does not include url1')
+          resolve({
+            attachment_id,
+            attachment_upload_url,
+          })
         } catch(err) {
           reject(err)
         }
