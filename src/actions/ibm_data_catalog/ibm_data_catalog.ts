@@ -5,7 +5,7 @@ const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
 
 // NOTE: getting catalogs: null when using v3 of this endpoint
 const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25'
-// const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v3/assets'
+const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/assets'
 
 function log(...args: any[]) {
   console.log.apply(console, args)
@@ -64,6 +64,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async execute(request: Hub.ActionRequest) {
     log('request.type', request.type)
     const type = this.determineRequestType(request)
+    log('determined type', type)
 
     switch (type) {
       case Hub.ActionType.Query:
@@ -96,11 +97,89 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async handleLookRequest(request: Hub.ActionRequest) {
     log('handleLookRequest')
-    // const bearer_token = await this.getBearerToken(request)
     this.debugRequest(request)
 
+    // get bearer_token, attach to request
+    const bearer_token = await this.getBearerToken(request)
+
+    // POST looker_look asset with metadata
+    const asset_id = await this.postLookAsset(bearer_token, request)
+
+    log('asset_id', asset_id)
+
+    // // POST attachment metadata to asset, returns attachment_id and signed PUT URL
+    // const { attachment_id, attachment_upload_url } = await this.postLookAttachment(asset_id, request)
+
+    // // format look data as CSV (for now, input with be constrained to csv)
+    // // PUT CSV to signed PUT URL
+    // await this.uploadLookAttachment(attachment_id, attachment_upload_url, request)
+
+    // // POST to complete endpoint?
+    // await this.uploadLookAttachmentComplete(attachment_id, request)
+
     return new Promise<Hub.ActionResponse>((resolve, reject) => {
+      // TODO what response?
       resolve(new Hub.ActionResponse())
+    })
+
+  }
+
+  async postLookAsset(bearer_token: string, request: Hub.ActionRequest) {
+    return new Promise<string>((resolve, reject) => {
+
+      const catalog = request.formParams && request.formParams.catalog
+      if (! catalog) {
+        reject("Missing catalog.")
+        return
+      }
+
+      const description = request.formParams && request.formParams.description
+      const title = request.scheduledPlan && request.scheduledPlan.title
+      const url = request.scheduledPlan && request.scheduledPlan.url
+      const share_url = (
+        request.scheduledPlan
+        && request.scheduledPlan.query
+        && request.scheduledPlan.query.share_url
+      )
+
+      const options = {
+        method: 'POST',
+        uri: `${ASSETS_URI}?catalog_id=${catalog}`,
+        headers: {
+          'Authorization': 'Bearer ' + bearer_token,
+          'Accept': 'application/json',
+        },
+        json: true,
+        body: {
+          metadata: {
+            name: title,
+            description,
+            asset_type: "looker_look",
+            origin_country: "us",
+            rating: 0
+          },
+          entity: {
+            looker_look: {
+              asset_type: "looker_look",
+              type: "Look",
+              title,
+              url,
+              share_url,
+            }
+          }
+        }
+      }
+
+      req(options)
+      .then(response => {
+        try {
+          if (response.asset_id) return resolve(response.asset_id)
+          throw new Error('response does not include access_token')
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
     })
   }
 
@@ -190,7 +269,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       {
         label: "Description",
         type: "string",
-        name: "looker_asset_description",
+        name: "description",
         default: "Describe this item",
         description: "optional",
       },
