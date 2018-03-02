@@ -44,6 +44,16 @@ interface Catalog {
   label: string,
 }
 
+interface Transaction {
+  type?: string,
+  bearer_token?: string,
+  catalog_id?: string,
+  asset_id?: string,
+  attachment_id?: string,
+  attachment_upload_url?: string,
+  request: Hub.ActionRequest
+}
+
 export class IbmDataCatalogAssetAction extends Hub.Action {
 
   name = "ibm_data_catalog"
@@ -63,21 +73,44 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async execute(request: Hub.ActionRequest) {
     log('request.type', request.type)
-    const type = this.determineRequestType(request)
-    log('determined type', type)
+    const transaction = await this.getTransactionFromRequest(request)
+    log('determined type', transaction.type)
 
-    switch (type) {
+    switch (transaction.type) {
       case Hub.ActionType.Query:
-        return this.handleLookRequest(request)
+        return this.handleLookTransaction(transaction)
       case Hub.ActionType.Dashboard:
-        return this.handleDashboardRequest(request)
+        return this.handleDashboardTransaction(transaction)
       default:
         // should never happen
         return Promise.reject('Invalid request.type')
     }
   }
 
-  private determineRequestType(request: Hub.ActionRequest) {
+  private async getTransactionFromRequest(request: Hub.ActionRequest) {
+    const bearer_token = await this.getBearerToken(request)
+
+    return new Promise<Transaction>((resolve, reject) => {
+
+      const catalog_id = request.formParams && request.formParams.catalog_id
+      if (! catalog_id) {
+        reject("Missing catalog.")
+        return
+      }
+
+      const type = this.getRequestType(request)
+
+      resolve({
+        request,
+        type,
+        bearer_token,
+        catalog_id
+      })
+
+    })
+  }
+
+  private getRequestType(request: Hub.ActionRequest) {
     // for now using scheduledPlan.type
     // because request.type is always 'query'
     const plan_type = (
@@ -95,19 +128,16 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
   }
 
-  async handleLookRequest(request: Hub.ActionRequest) {
-    log('handleLookRequest')
-    this.debugRequest(request)
-
-    // get bearer_token, attach to request
-    const bearer_token = await this.getBearerToken(request)
+  async handleLookTransaction(transaction: Transaction) {
+    log('handleLookTransaction')
+    this.debugRequest(transaction.request)
 
     // POST looker_look asset with metadata
-    const asset_id = await this.postLookAsset(bearer_token, request)
+    transaction.asset_id = await this.postLookAsset(transaction)
 
-    log('asset_id', asset_id)
+    log('transaction.asset_id', transaction.asset_id)
 
-    // // POST attachment metadata to asset, returns attachment_id and signed PUT URL
+    // POST attachment metadata to asset, returns attachment_id and signed PUT URL
     // const { attachment_id, attachment_upload_url } = await this.postLookAttachment(asset_id, request)
 
     // // format look data as CSV (for now, input with be constrained to csv)
@@ -117,36 +147,31 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     // // POST to complete endpoint?
     // await this.uploadLookAttachmentComplete(attachment_id, request)
 
-    return new Promise<Hub.ActionResponse>((resolve, reject) => {
+    return new Promise<Hub.ActionResponse>((resolve) => {
       // TODO what response?
       resolve(new Hub.ActionResponse())
     })
 
   }
 
-  async postLookAsset(bearer_token: string, request: Hub.ActionRequest) {
+  async postLookAsset(transaction: Transaction) {
     return new Promise<string>((resolve, reject) => {
+      const { request } = transaction
+      const { formParams, scheduledPlan = {} } = request
 
-      const catalog = request.formParams && request.formParams.catalog
-      if (! catalog) {
-        reject("Missing catalog.")
-        return
-      }
-
-      const description = request.formParams && request.formParams.description
-      const title = request.scheduledPlan && request.scheduledPlan.title
-      const url = request.scheduledPlan && request.scheduledPlan.url
+      const { description } = formParams
+      const { title, url } = scheduledPlan
       const share_url = (
-        request.scheduledPlan
-        && request.scheduledPlan.query
-        && request.scheduledPlan.query.share_url
+        scheduledPlan
+        && scheduledPlan.query
+        && scheduledPlan.query.share_url
       )
 
       const options = {
         method: 'POST',
-        uri: `${ASSETS_URI}?catalog_id=${catalog}`,
+        uri: `${ASSETS_URI}?catalog_id=${transaction.catalog_id}`,
         headers: {
-          'Authorization': 'Bearer ' + bearer_token,
+          'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
         },
         json: true,
@@ -183,12 +208,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async handleDashboardRequest(request: Hub.ActionRequest) {
-    log('handleDashboardRequest')
+  async handleDashboardTransaction(transaction: Transaction) {
+    log('handleDashboardTransaction')
     // const bearer_token = await this.getBearerToken(request)
-    this.debugRequest(request)
+    this.debugRequest(transaction.request)
 
-    return new Promise<Hub.ActionResponse>((resolve, reject) => {
+    return new Promise<Hub.ActionResponse>((resolve) => {
       resolve(new Hub.ActionResponse())
     })
   }
@@ -253,9 +278,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     form.fields = [
       {
-        description: "Name of the catalog to send to",
-        label: "Send to",
-        name: "catalog",
+        description: 'Name of the catalog to send to',
+        label: 'Send to',
+        name: 'catalog_id',
         options: catalogs.map((catalog, i) => {
           return {
             name: catalog.guid,
@@ -264,14 +289,14 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           }
         }),
         required: true,
-        type: "select",
+        type: 'select',
       },
       {
-        label: "Description",
-        type: "string",
-        name: "description",
-        default: "Describe this item",
-        description: "optional",
+        label: 'Description',
+        type: 'string',
+        name: 'description',
+        default: 'Describe this item',
+        description: 'optional',
       },
     ]
 
