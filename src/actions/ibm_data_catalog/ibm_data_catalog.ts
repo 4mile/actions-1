@@ -1,6 +1,6 @@
 import * as Hub from "../../hub"
-import * as req from "request"
 import * as stream from "stream"
+import * as req from "request"
 import * as reqPromise from "request-promise-native"
 
 const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
@@ -267,12 +267,17 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       bufferStream.end(buffer)
 
       // PUT the buffer to the attachment_upload_url
-      bufferStream
-      .pipe(req.put(attachment_upload_url))
-      .end((res) => {
-        log('res', res)
-        resolve(res)
-      })
+      bufferStream.pipe(
+        req.put(attachment_upload_url)
+        .on('response', (res) => {
+          log('res', res)
+          resolve(res)
+        })
+        .on('error', (err) => {
+          log('err', err)
+          reject(err)
+        })
+      )
 
       // const options = {
       //   method: 'PUT',
