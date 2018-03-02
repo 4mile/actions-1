@@ -146,8 +146,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     // PUT CSV to signed PUT URL
     await this.uploadAttachment(attachment_upload_url, transaction)
 
-    // // POST to complete endpoint?
-    // await this.uploadLookAttachmentComplete(attachment_id, request)
+    // POST to complete endpoint?
+    await this.postAttachmentComplete(asset_id, attachment_id, transaction)
 
     return new Promise<Hub.ActionResponse>((resolve) => {
       // TODO what response?
@@ -157,6 +157,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async postLookAsset(transaction: Transaction) {
+    log('postLookAsset')
+
     return new Promise<string>((resolve, reject) => {
       const { request } = transaction
       const { formParams, scheduledPlan = {} } = request
@@ -211,6 +213,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async postAttachmentToAsset(asset_id: string, transaction: Transaction) {
+    log('postAttachmentToAsset')
+
     return new Promise<any>((resolve, reject) => {
 
       const options = {
@@ -251,6 +255,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async uploadAttachment(attachment_upload_url: string, transaction: Transaction) {
+    log('uploadAttachment')
+
     return new Promise<any>((resolve, reject) => {
 
       const buffer = (
@@ -279,39 +285,34 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         })
       )
 
-      // const options = {
-      //   method: 'PUT',
-      //   uri: attachment_upload_url,
-      //   headers: {
-      //     'Accept': 'application/json',
-      //   },
-      //   json: true,
-      //   body: {
-      //     asset_type: 'looker_look',
-      //     name: 'Looker Look Attachment',
-      //     description: 'CSV attachment',
-      //     mime: 'text/csv',
-      //     data_partitions: 1,
-      //     private_url: true
-      //   }
-      // }
+    })
+  }
 
-      // req(options)
-      // .then(response => {
-      //   try {
-      //     const attachment_id = response.attachment_id
-      //     const attachment_upload_url = response.url1
-      //     if (! attachment_id) throw new Error('response does not include attachment_id')
-      //     if (! attachment_upload_url) throw new Error('response does not include url1')
-      //     resolve({
-      //       attachment_id,
-      //       attachment_upload_url,
-      //     })
-      //   } catch(err) {
-      //     reject(err)
-      //   }
-      // })
-      // .catch(reject)
+  async postAttachmentComplete(asset_id: string, attachment_id: string, transaction: Transaction) {
+    log('postAssetAttachmentComplete')
+
+    return new Promise<any>((resolve, reject) => {
+
+      const options = {
+        method: 'POST',
+        uri: `${ASSETS_URI}/${asset_id}/attachments/${attachment_id}/complete?catalog_id=${transaction.catalog_id}`,
+        headers: {
+          'Authorization': `Bearer ${transaction.bearer_token}`,
+          'Accept': 'application/json',
+        },
+        json: true,
+      }
+
+      reqPromise(options)
+      .then(response => {
+        try {
+          log('response', response)
+          resolve(response)
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
     })
   }
 
