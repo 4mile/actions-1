@@ -293,15 +293,19 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   getLookerRenderUrl(transaction: Transaction) {
+    const {
+      looker_api_url,
+    } = transaction.request.params
+
     const item_url = (
       transaction.request.scheduledPlan
       && transaction.request.scheduledPlan.url
     )
     if (! item_url) return
 
-    const render_url = url.parse(item_url)
+    const parsed_url = url.parse(item_url)
 
-    return render_url
+    return `${looker_api_url}/render_tasks${parsed_url.pathname}/png?width=600&height=600`
   }
 
   async renderLookerPng(transaction: Transaction) {
