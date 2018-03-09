@@ -194,12 +194,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('fileType buffer:', fileType(buffer))
     log('buffer.length:', buffer.length)
 
-    // upload PNG to IBM Cloud Object Storage (COS)
-    const png_path = await this.uploadPngToIbmCos(bucket, buffer, transaction)
-    log('png_path:', png_path)
+    // upload PNG to IBM Cloud Object Storage (COS), get file_name
+    const file_name = await this.uploadPngToIbmCos(bucket, buffer, transaction)
+    log('file_name:', file_name)
 
-    // // add attachment to the asset, pointing to PNG in COS
-    // await this.postAttachmentToAsset(asset_id, png_path, transaction)
+    // add attachment to the asset, pointing to PNG in COS
+    await this.postAttachmentToAsset(asset_id, bucket, file_name, transaction)
 
     return new Promise<Hub.ActionResponse>((resolve) => {
       // TODO what response?
@@ -457,7 +457,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       bufferStream.pipe(
         req(options)
         .on('response', () => {
-          resolve(file_url)
+          resolve(file_name)
         })
         .on('error', (err) => {
           log('err', err)
@@ -503,7 +503,30 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async postAttachmentToAsset(asset_id: string, png_path: string, transaction: Transaction) {
+  async postAttachmentToAsset(asset_id: string, bucket: any, file_name: string, transaction: Transaction) {
+    log('postAttachmentToAsset')
+    const connection_id = bucket.bluemix_cos_connection.editor.bucket_connection_id
+    const connection_path = `${bucket.bucket_name}/${file_name}`
+
+    const options = {
+      method: 'POST',
+      uri: `${DATACATALOG_API}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
+      headers: {
+        'Authorization': `Bearer ${transaction.bearer_token}`,
+        'Accept': 'application/json',
+      },
+      json: true,
+      body: {
+        asset_type: 'looker_query',
+        connection_id,
+        connection_path,
+      }
+    }
+
+    return reqPromise(options)
+  }
+
+  async old_postAttachmentToAsset(asset_id: string, png_path: string, transaction: Transaction) {
     log('postAttachmentToAsset')
     log('png_path:', png_path)
 
@@ -546,7 +569,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async uploadAttachment(attachment_upload_url: string, transaction: Transaction) {
+  async old_uploadAttachment(attachment_upload_url: string, transaction: Transaction) {
     log('uploadAttachment')
 
     return new Promise<any>((resolve, reject) => {
@@ -580,7 +603,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async postAttachmentComplete(asset_id: string, attachment_id: string, transaction: Transaction) {
+  async old_postAttachmentComplete(asset_id: string, attachment_id: string, transaction: Transaction) {
     log('postAssetAttachmentComplete')
 
     return new Promise<any>((resolve, reject) => {
