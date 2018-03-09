@@ -4,11 +4,12 @@ import * as req from "request"
 import * as reqPromise from "request-promise-native"
 import * as crypto from 'crypto'
 import * as url from 'url'
-const isMime = require('is-mime')
+// const isMime = require('is-mime')
 // const fileType = require('file-type')
 
-const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
-const BASE_URL = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
+const BEARER_TOKEN_API = 'https://iam.ng.bluemix.net/identity/token'
+const DATACATALOG_API = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
+const COS_API = 'https://s3-api.us-geo.objectstorage.softlayer.net'
 const CHECK_RENDER_MAX_ATTEMPTS = 100
 const CHECK_RENDER_INTERVAL = 2000
 
@@ -188,13 +189,15 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     // get PNG from looker API
     const buffer = await this.getLookerPngBuffer(transaction)
-    log('buffer:', isMime.checkBuffer('image/png', buffer))
+    // log('buffer:', isMime.checkBuffer('image/png', buffer))
+    log('buffer:', buffer.length)
 
     const hash = await this.getHashForBuffer(buffer)
     log('hash:', hash)
 
-    // // upload PNG to IBM Cloud Object Storage (COS)
-    // const png_path = await this.uploadPngToIbmCos(png_buffer, transaction)
+    // upload PNG to IBM Cloud Object Storage (COS)
+    const png_path = await this.uploadPngToIbmCos(bucket, buffer, hash, transaction)
+    log('png_path:', png_path)
 
     // // add attachment to the asset, pointing to PNG in COS
     // await this.postAttachmentToAsset(asset_id, png_path, transaction)
@@ -231,7 +234,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'POST',
-        uri: `${BASE_URL}/assets?catalog_id=${transaction.catalog_id}`,
+        uri: `${DATACATALOG_API}/assets?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -271,7 +274,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'GET',
-        uri: `${BASE_URL}/catalogs/${transaction.catalog_id}/asset_buckets`,
+        uri: `${DATACATALOG_API}/catalogs/${transaction.catalog_id}/asset_buckets`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -410,8 +413,13 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return reqPromise(options)
   }
 
-  async uploadPngToIbmCos(png_buffer: Buffer, transaction: Transaction) {
-    log('uploadPngToIbmCos', png_buffer, transaction)
+  async uploadPngToIbmCos(bucket: any, buffer: Buffer, hash: string, transaction: Transaction) {
+    log('uploadPngToIbmCos')
+    log('bucket:', bucket)
+    log('buffer.length:', buffer.length)
+    log('hash:', hash)
+    log('transaction.type:', transaction.type)
+    log('COS_API:', COS_API)
   }
 
   async getHashForBuffer(buffer: Buffer) {
@@ -442,7 +450,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'POST',
-        uri: `${BASE_URL}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
+        uri: `${DATACATALOG_API}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -518,7 +526,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'POST',
-        uri: `${BASE_URL}/assets/${asset_id}/attachments/${attachment_id}/complete?catalog_id=${transaction.catalog_id}`,
+        uri: `${DATACATALOG_API}/assets/${asset_id}/attachments/${attachment_id}/complete?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -639,7 +647,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const options = {
       method: 'POST',
-      uri: BEARER_TOKEN_URI,
+      uri: BEARER_TOKEN_API,
       form: data,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -703,7 +711,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'GET',
-        uri: `${BASE_URL}/catalogs?limit=25`,
+        uri: `${DATACATALOG_API}/catalogs?limit=25`,
         headers: {
           'Authorization': 'Bearer ' + bearer_token,
           'Accept': 'application/json',
