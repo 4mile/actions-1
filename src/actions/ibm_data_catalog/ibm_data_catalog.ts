@@ -356,8 +356,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async checkLookerRender(render_id: string, transaction: Transaction) {
-    log('checkLookerRender')
-
     return new Promise<boolean>((resolve, reject) => {
       if (transaction.render_check_attempts > CHECK_RENDER_MAX_ATTEMPTS) {
         return reject('Unable to check render status.')
@@ -378,6 +376,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       }
 
       setTimeout(() => {
+        log('checkLookerRender')
         reqPromise(options)
         .then(response => {
           try {
