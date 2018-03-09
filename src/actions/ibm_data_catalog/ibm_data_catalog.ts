@@ -368,13 +368,14 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           try {
             if (! response.status) throw new Error('Response does not include status.')
             if (response.status === 'success') return resolve(true)
+            log('status', response.status)
             resolve(this.checkLookerRender(render_id, transaction))
           } catch(err) {
             reject(err)
           }
         })
         .catch(reject)
-      }, 500)
+      }, 1000)
 
     })
   }
