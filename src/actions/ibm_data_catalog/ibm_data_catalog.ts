@@ -51,6 +51,7 @@ interface Transaction {
   bearer_token: string,
   looker_token: string,
   catalog_id: string,
+  render_check_attempts: number,
 }
 
 export class IbmDataCatalogAssetAction extends Hub.Action {
@@ -131,7 +132,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           type,
           bearer_token,
           looker_token,
-          catalog_id
+          catalog_id,
+          render_check_attempts: 0,
         })
       })
 
@@ -291,13 +293,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const render_id = await this.renderLookerPng(transaction)
     log('render_id', render_id)
 
-    setTimeout(() => {
-      this.checkLookerRender(render_id, transaction)
-      .then(status => {
-        log('render status:', status)
-      })
-      .catch(log)
-    }, 1000)
+    const ready = await this.checkLookerRender(render_id, transaction)
+    log('ready', ready)
   }
 
   getLookerRenderUrl(transaction: Transaction) {
@@ -348,7 +345,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async checkLookerRender(render_id: string, transaction: Transaction) {
-    return new Promise<string>((resolve, reject) => {
+    log('checkLookerRender')
+    return new Promise<boolean>((resolve, reject) => {
+      if (transaction.render_check_attempts > 100) reject('Unable to check render status.')
+      transaction.render_check_attempts += 1
+
       const { looker_api_url } = transaction.request.params
 
       const options = {
@@ -361,19 +362,20 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         json: true
       }
 
-      log('options', options)
+      setTimeout(() => {
+        reqPromise(options)
+        .then(response => {
+          try {
+            if (! response.status) throw new Error('Response does not include status.')
+            if (response.status === 'success') return resolve(true)
+            resolve(this.checkLookerRender(render_id, transaction))
+          } catch(err) {
+            reject(err)
+          }
+        })
+        .catch(reject)
+      }, 500)
 
-      reqPromise(options)
-      .then(response => {
-        try {
-          if (! response.status) throw new Error('Response does not include status.')
-          log('status', response.status)
-          resolve(response.status)
-        } catch(err) {
-          reject(err)
-        }
-      })
-      .catch(reject)
     })
   }
 
