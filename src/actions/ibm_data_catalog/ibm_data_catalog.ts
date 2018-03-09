@@ -131,12 +131,24 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('handleLookTransaction')
     this.debugRequest(transaction.request)
 
-    // POST looker_look asset with metadata
+    /*
+    Looks:
+    * Manually create asset of type looker_query via API (one time task) to replace looker_look
+    * For each Look triggered via an Action:
+    * Create new asset of type looker_query
+    * Put the Look's title into the asset's title
+    * Put the Look's URL into the asset's description
+    * Iterate though each dimension in the fields.dimensions array (from Looker's json_detail blob) and create a tag on your Data Catalog asset with each dimension's label property
+    * Add the entirety of Looker's json_detail blob minus the data{} object (so, all the the metadata) to the Data Catalog asset's entity{} object.
+    *
+    */
+
+    // POST looker_query asset with metadata
     const asset_id = await this.postLookAsset(transaction)
 
     log('asset_id', asset_id)
 
-    // // POST attachment metadata to asset, returns attachment_id and signed PUT URL
+    // POST attachment metadata to asset, returns attachment_id and signed PUT URL
     // const { attachment_id, attachment_upload_url } = await this.postAttachmentToAsset(asset_id, transaction)
 
     // log('attachment_id', attachment_id)
@@ -165,6 +177,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       const { scheduledPlan = {} } = request
 
       const { title, url } = scheduledPlan
+      const tags = (
+        attachment.dataJSON.fields.dimensions
+        .map(dim => dim.label)
+      )
 
       const entity_data = {
         attachment,
@@ -185,8 +201,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           metadata: {
             name: title,
             description: url,
-            asset_type: "looker_query",
-            origin_country: "us",
+            asset_type: 'looker_query',
+            tags: `[ ${tags.join(', ')} ]`,
+            origin_country: 'us',
             rating: 0
           },
           entity: {
