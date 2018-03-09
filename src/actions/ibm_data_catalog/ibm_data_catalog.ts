@@ -179,7 +179,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       const { title, url } = scheduledPlan
       const tags = (
         attachment.dataJSON.fields.dimensions
-        .map(dim => dim.label)
+        .map((dim: any) => dim.label)
       )
 
       const entity_data = {
@@ -202,7 +202,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             name: title,
             description: url,
             asset_type: 'looker_query',
-            tags: `[ ${tags.join(', ')} ]`,
+            tags: `[${tags.join(', ')}]`,
             origin_country: 'us',
             rating: 0
           },
@@ -211,6 +211,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           }
         }
       }
+
+      log('options', options)
 
       reqPromise(options)
       .then(response => {
