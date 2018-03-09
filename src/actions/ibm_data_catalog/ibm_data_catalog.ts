@@ -176,18 +176,20 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       const { attachment = {} } = request
       const { scheduledPlan = {} } = request
 
+      const { dataJSON } = attachment
       const { title, url } = scheduledPlan
+
       const tags = (
-        attachment.dataJSON.fields.dimensions
+        dataJSON.fields.dimensions
         .map((dim: any) => dim.label)
       )
 
       const entity_data = {
-        attachment,
+        dataJSON,
         scheduledPlan,
       }
 
-      delete entity_data.attachment.dataJSON.data
+      delete entity_data.dataJSON.data
 
       const options = {
         method: 'POST',
