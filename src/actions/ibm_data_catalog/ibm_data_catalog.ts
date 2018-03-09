@@ -292,10 +292,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('render_id', render_id)
 
     setTimeout(() => {
-      this.checkLookerRender(render_id, transaction).then(status => {
+      this.checkLookerRender(render_id, transaction)
+      .then(status => {
         log('render status:', status)
       })
-    }, 10000)
+      .catch(log)
+    }, 1000)
   }
 
   getLookerRenderUrl(transaction: Transaction) {
@@ -358,6 +360,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         },
         json: true
       }
+
+      log('options', options)
 
       reqPromise(options)
       .then(response => {
