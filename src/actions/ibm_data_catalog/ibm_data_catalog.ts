@@ -181,7 +181,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const tags = (
         dataJSON.fields.dimensions
-        .map((dim: any) => dim.label)
+        .map((dim: any) => dim.label_short)
       )
 
       const entity_data = {
@@ -209,8 +209,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             rating: 0
           },
           entity: {
-            // looker_query: entity_data,
-            looker_query: {},
+            looker_query: entity_data,
+            // looker_query: {},
           }
         }
       }
