@@ -60,7 +60,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   iconName = "ibm_data_catalog/ibm_logo.png"
   description = "Add an asset to an IBM Data Catalog"
   supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
-  supportedFormats = [Hub.ActionFormat.Csv, Hub.ActionFormat.CsvZip]
+  supportedFormats = [Hub.ActionFormat.WysiwygPng]
   requiredFields = []
   params = [{
     name: "ibm_cloud_api_key",
@@ -161,9 +161,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     return new Promise<string>((resolve, reject) => {
       const { request } = transaction
-      const { formParams, scheduledPlan = {} } = request
+      const { scheduledPlan = {} } = request
 
-      const { description } = formParams
       const { title, url } = scheduledPlan
       const share_url = (
         scheduledPlan
@@ -182,15 +181,16 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         body: {
           metadata: {
             name: title,
-            description,
-            asset_type: "looker_look",
+            description: url,
+            asset_type: "looker_query",
             origin_country: "us",
             rating: 0
           },
           entity: {
             looker_look: {
-              asset_type: "looker_look",
+              asset_type: "data_asset",
               type: "Look",
+              mime_type: 'text/csv',
               title,
               url,
               share_url,
@@ -226,7 +226,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         },
         json: true,
         body: {
-          asset_type: 'looker_look',
+          asset_type: 'data_asset',
           name: 'Looker Look Attachment',
           description: 'CSV attachment',
           mime: 'text/csv',
@@ -389,22 +389,14 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         description: 'Name of the catalog to send to',
         label: 'Send to',
         name: 'catalog_id',
-        options: catalogs.map((catalog, i) => {
+        options: catalogs.map((catalog) => {
           return {
             name: catalog.guid,
             label: catalog.label,
-            selected: i === 0,
           }
         }),
         required: true,
         type: 'select',
-      },
-      {
-        label: 'Description',
-        type: 'string',
-        name: 'description',
-        default: 'Describe this item',
-        description: 'optional',
       },
     ]
 
