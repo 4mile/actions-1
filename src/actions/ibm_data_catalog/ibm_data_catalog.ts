@@ -14,37 +14,23 @@ const COS_API = 'https://s3-api.us-geo.objectstorage.softlayer.net'
 const CHECK_RENDER_MAX_ATTEMPTS = 100
 const CHECK_RENDER_INTERVAL = 2000
 
+const QUERY_RENDER_PARAMS: any = {
+  width: 600,
+  height: 600,
+}
+const DASHBOARD_RENDER_PARAMS: any = {
+  width: 600,
+  height: 1200,
+}
+
 function log(...args: any[]) {
   console.log.apply(console, args)
 }
 
 /*
-- define asset types for looker_look and looker_dashboard
-
-update form method
-- √ get bearer token
-- √ get list of catalogs
-- √ display catalogs as destinations
-
-update execute method
-- parse asset type
-- parse destination
-- parse out metadata from looker object
-- send metadata as an asset to destination
-
-update tests?
-
-- should we get a new bearer token for every transaction
-
-**** 2018-02-25
-can't get a proper POST to /assets working
-can post an empty `entity` but getting errors if i try to put any data in there
-related, stumped on 'asset_type' and 'asset_category'
-think we might need to define our asset types for Look and Dashboard first,
-but don't see a way to do that manually. maybe have to do it via the API
+NOTES:
 
 */
-
 
 interface Catalog {
   guid: string,
@@ -57,6 +43,7 @@ interface Transaction {
   bearer_token: string,
   looker_token: string,
   catalog_id: string,
+  asset_type: string,
   render_check_attempts: number,
 }
 
@@ -103,15 +90,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const transaction = await this.getTransactionFromRequest(request)
     log('determined type', transaction.type)
 
-    switch (transaction.type) {
-      case Hub.ActionType.Query:
-        return this.handleLookTransaction(transaction)
-      case Hub.ActionType.Dashboard:
-        return this.handleDashboardTransaction(transaction)
-      default:
-        // should never happen
-        return Promise.reject('Invalid request.type')
-    }
+    return this.handleTransaction(transaction)
   }
 
   private async getTransactionFromRequest(request: Hub.ActionRequest) {
@@ -129,6 +108,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         return
       }
 
+      const asset_type = this.getAssetType(type)
+      if (! asset_type) {
+        reject("Unable to determine asset_type.")
+        return
+      }
+
       Promise.all([
         this.getBearerToken(request),
         this.getLookerToken(request),
@@ -136,6 +121,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         resolve({
           request,
           type,
+          asset_type,
           bearer_token,
           looker_token,
           catalog_id,
@@ -164,8 +150,19 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
   }
 
-  async handleLookTransaction(transaction: Transaction) {
-    log('handleLookTransaction')
+  private getAssetType(type: Hub.ActionType) {
+    switch (type) {
+      case Hub.ActionType.Query:
+        return 'looker_query'
+      case Hub.ActionType.Dashboard:
+        return 'looker_dashboard'
+      default:
+        return
+    }
+  }
+
+  async handleTransaction(transaction: Transaction) {
+    log('handleTransaction')
     this.debugRequest(transaction.request)
 
     /*
@@ -181,7 +178,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     */
 
     // POST looker_query asset with metadata
-    const asset_id = await this.postLookAsset(transaction)
+    const asset_id = await this.postAsset(transaction)
     log('asset_id:', asset_id)
 
     // get bucket for this catalog - using first one for now
@@ -208,11 +205,23 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   }
 
+  async postAsset(transaction: Transaction) {
+    switch (transaction.type) {
+      case Hub.ActionType.Query:
+        return this.postLookAsset(transaction)
+      case Hub.ActionType.Dashboard:
+        return this.postDashboardAsset(transaction)
+      default:
+        // should never happen
+        return Promise.reject('Unknown transaction type.')
+    }
+  }
+
   async postLookAsset(transaction: Transaction) {
     log('postLookAsset')
 
     return new Promise<string>((resolve, reject) => {
-      const { request } = transaction
+      const { request, asset_type } = transaction
       const { attachment = {} } = request
       const { scheduledPlan = {} } = request
 
@@ -243,7 +252,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           metadata: {
             name: title,
             description: url,
-            asset_type: 'looker_query',
+            asset_type,
             tags,
             origin_country: 'us',
             rating: 0
@@ -251,6 +260,55 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           entity: {
             looker_query: entity_data,
             // looker_query: {},
+          }
+        }
+      }
+
+      reqPromise(options)
+      .then(response => {
+        try {
+          if (! response.asset_id) throw new Error('Response does not include access_token.')
+          resolve(response.asset_id)
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
+    })
+  }
+
+  async postDashboardAsset(transaction: Transaction) {
+    log('postDashboardAsset')
+
+    return new Promise<string>((resolve, reject) => {
+      const { request, asset_type } = transaction
+      const { scheduledPlan = {} } = request
+
+      const { title, url } = scheduledPlan
+
+      const entity_data = {
+        scheduledPlan,
+      }
+
+      const options = {
+        method: 'POST',
+        uri: `${DATACATALOG_API}/assets?catalog_id=${transaction.catalog_id}`,
+        headers: {
+          'Authorization': `Bearer ${transaction.bearer_token}`,
+          'Accept': 'application/json',
+        },
+        json: true,
+        body: {
+          metadata: {
+            name: title,
+            description: url,
+            asset_type,
+            tags: [], // TODO
+            origin_country: 'us',
+            rating: 0
+          },
+          entity: {
+            looker_query: entity_data,
           }
         }
       }
@@ -329,7 +387,15 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const item_url = this.getLookerItemUrl(transaction)
     if (! item_url) return
 
-    return `${looker_api_url}/render_tasks${item_url.pathname}/png?width=600&height=600`
+    const params = (
+      transaction.type === Hub.ActionType.Query
+      ? QUERY_RENDER_PARAMS
+      : DASHBOARD_RENDER_PARAMS
+    )
+
+    const query = Object.keys(params).map(key => `${key}=${params[key]}`).join('&')
+
+    return `${looker_api_url}/render_tasks${item_url.pathname}/png?${query}`
   }
 
   async startLookerRender(transaction: Transaction) {
@@ -341,6 +407,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       if (! render_url) return reject('Unabled to get render_url.')
 
+      const body: any = {}
+      if (transaction.type === Hub.ActionType.Dashboard) {
+        body.dashboard_style = 'tiled'
+      }
+
       const options = {
         method: 'POST',
         uri: render_url,
@@ -348,6 +419,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           'Authorization': `token ${transaction.looker_token}`,
           'Accept': 'application/json',
         },
+        body,
         json: true
       }
 
@@ -505,6 +577,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async postAttachmentToAsset(asset_id: string, bucket: any, file_name: string, transaction: Transaction) {
     log('postAttachmentToAsset')
+    const { asset_type } = transaction
     const connection_id = bucket.bluemix_cos_connection.editor.bucket_connection_id
     const connection_path = `${bucket.bucket_name}/${file_name}`
 
@@ -517,7 +590,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       },
       json: true,
       body: {
-        asset_type: 'looker_query',
+        asset_type,
         connection_id,
         connection_path,
       }
