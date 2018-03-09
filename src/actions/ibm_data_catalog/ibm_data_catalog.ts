@@ -4,6 +4,7 @@ import * as req from "request"
 import * as reqPromise from "request-promise-native"
 import * as crypto from 'crypto'
 import * as url from 'url'
+import * as fs from 'fs'
 // const isMime = require('is-mime')
 // const fileType = require('file-type')
 
@@ -434,6 +435,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       log('file_name:', file_name)
 
       const file_url = `${COS_API}/${bucket.bucket_name}/${file_name}`
+      log('file_url:', file_url)
 
       const options = {
         method: 'PUT',
@@ -446,14 +448,15 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       // create a stream from our buffer
       const bufferStream = new stream.PassThrough()
-      bufferStream.end(buffer)
+      const local_file = fs.readFileSync('./ibm_logo.png')
+      bufferStream.end(local_file)
 
       // PUT the buffer to the attachment_upload_url
       bufferStream.pipe(
         req(options)
         .on('response', (res) => {
           log('res', res)
-          resolve(file_name)
+          resolve(file_url)
         })
         .on('error', (err) => {
           log('err', err)
