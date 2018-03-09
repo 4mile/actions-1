@@ -185,8 +185,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('bucket', bucket)
 
     // get PNG from looker API
-    const png_buffer = await this.getLookerPngBuffer(transaction)
-    log('png_buffer', !! png_buffer)
+    const buffer = await this.getLookerPngBuffer(transaction)
+    log('buffer', !! buffer)
+
+    const hash = await this.getHashForBuffer(buffer)
+    log('hash:', hash)
 
     // // upload PNG to IBM Cloud Object Storage (COS)
     // const png_path = await this.uploadPngToIbmCos(png_buffer, transaction)
@@ -298,8 +301,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const ready = await this.checkLookerRender(render_id, transaction)
     log('ready:', ready)
 
-    const download = await this.downloadLookerRender(render_id, transaction)
-    log('download:', typeof download)
+    const buffer = await this.downloadLookerRender(render_id, transaction)
+    log('buffer:', typeof buffer)
+
+    return buffer
   }
 
   getLookerRenderUrl(transaction: Transaction) {
@@ -392,31 +397,17 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async downloadLookerRender(render_id: string, transaction: Transaction) {
     log('downloadLookerRender')
 
-    return new Promise<Buffer>((resolve, reject) => {
-      const { looker_api_url } = transaction.request.params
+    const { looker_api_url } = transaction.request.params
 
-      const options = {
-        method: 'GET',
-        uri: `${looker_api_url}/render_tasks/${render_id}/results`,
-        headers: {
-          'Authorization': `token ${transaction.looker_token}`,
-          'Accept': 'application/json',
-        },
-        json: true
-      }
+    const options = {
+      method: 'GET',
+      uri: `${looker_api_url}/render_tasks/${render_id}/results`,
+      headers: {
+        'Authorization': `token ${transaction.looker_token}`,
+      },
+    }
 
-      reqPromise(options)
-      .then(response => {
-        try {
-          log(Object.keys(response))
-          resolve(response)
-        } catch(err) {
-          reject(err)
-        }
-      })
-      .catch(reject)
-
-    })
+    return reqPromise(options)
   }
 
   async uploadPngToIbmCos(png_buffer: Buffer, transaction: Transaction) {
