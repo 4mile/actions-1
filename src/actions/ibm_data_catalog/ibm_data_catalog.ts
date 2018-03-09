@@ -250,7 +250,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return new Promise<any>((resolve, reject) => {
 
       const options = {
-        method: 'POST',
+        method: 'GET',
         uri: `${BASE_URL}/catalogs/${transaction.catalog_id}/asset_buckets`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
