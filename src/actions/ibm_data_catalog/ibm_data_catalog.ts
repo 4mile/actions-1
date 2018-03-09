@@ -60,7 +60,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   iconName = "ibm_data_catalog/ibm_logo.png"
   description = "Add an asset to an IBM Data Catalog"
   supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
-  // supportedFormats = [Hub.ActionFormat.WysiwygPng]
+  supportedFormats = [Hub.ActionFormat.JsonDetail, Hub.ActionFormat.CsvZip]
   requiredFields = []
   params = [{
     name: "ibm_cloud_api_key",
@@ -131,23 +131,23 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('handleLookTransaction')
     this.debugRequest(transaction.request)
 
-    // POST looker_look asset with metadata
-    const asset_id = await this.postLookAsset(transaction)
+    // // POST looker_look asset with metadata
+    // const asset_id = await this.postLookAsset(transaction)
 
-    log('asset_id', asset_id)
+    // log('asset_id', asset_id)
 
-    // POST attachment metadata to asset, returns attachment_id and signed PUT URL
-    const { attachment_id, attachment_upload_url } = await this.postAttachmentToAsset(asset_id, transaction)
+    // // POST attachment metadata to asset, returns attachment_id and signed PUT URL
+    // const { attachment_id, attachment_upload_url } = await this.postAttachmentToAsset(asset_id, transaction)
 
-    log('attachment_id', attachment_id)
-    log('attachment_upload_url', attachment_upload_url)
+    // log('attachment_id', attachment_id)
+    // log('attachment_upload_url', attachment_upload_url)
 
-    // format look data as CSV (for now, input with be constrained to csv)
-    // PUT CSV to signed PUT URL
-    await this.uploadAttachment(attachment_upload_url, transaction)
+    // // format look data as CSV (for now, input with be constrained to csv)
+    // // PUT CSV to signed PUT URL
+    // await this.uploadAttachment(attachment_upload_url, transaction)
 
-    // POST to complete endpoint?
-    await this.postAttachmentComplete(asset_id, attachment_id, transaction)
+    // // POST to complete endpoint?
+    // await this.postAttachmentComplete(asset_id, attachment_id, transaction)
 
     return new Promise<Hub.ActionResponse>((resolve) => {
       // TODO what response?
