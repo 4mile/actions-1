@@ -204,12 +204,13 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             name: title,
             description: url,
             asset_type: 'looker_query',
-            tags: `[${tags.join(', ')}]`,
+            tags,
             origin_country: 'us',
             rating: 0
           },
           entity: {
-            looker_query: entity_data,
+            // looker_query: entity_data,
+            looker_query: {},
           }
         }
       }
