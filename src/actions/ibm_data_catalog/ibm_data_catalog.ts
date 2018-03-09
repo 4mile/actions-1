@@ -177,7 +177,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     *
     */
 
-    // POST looker_query asset with metadata
+    // POST asset with metadata
     const asset_id = await this.postAsset(transaction)
     log('asset_id:', asset_id)
 
@@ -308,7 +308,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             rating: 0
           },
           entity: {
-            looker_query: entity_data,
+            looker_dashboard: entity_data,
           }
         }
       }
