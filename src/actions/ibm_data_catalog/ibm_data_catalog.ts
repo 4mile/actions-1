@@ -4,7 +4,8 @@ import * as req from "request"
 import * as reqPromise from "request-promise-native"
 import * as crypto from 'crypto'
 import * as url from 'url'
-const fileType = require('file-type')
+const isMime = require('is-mime')
+// const fileType = require('file-type')
 
 const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
 const BASE_URL = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
@@ -187,7 +188,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     // get PNG from looker API
     const buffer = await this.getLookerPngBuffer(transaction)
-    log('buffer:', fileType(buffer))
+    log('buffer:', isMime.checkBuffer('image/png', buffer))
 
     const hash = await this.getHashForBuffer(buffer)
     log('hash:', hash)
@@ -303,7 +304,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('ready:', ready)
 
     const buffer = await this.downloadLookerRender(render_id, transaction)
-    log('buffer:', typeof buffer)
 
     return buffer
   }
