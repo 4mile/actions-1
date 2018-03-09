@@ -4,6 +4,7 @@ import * as req from "request"
 import * as reqPromise from "request-promise-native"
 import * as crypto from 'crypto'
 import * as url from 'url'
+const fileType = require('file-type')
 
 const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
 const BASE_URL = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
@@ -178,15 +179,15 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     // POST looker_query asset with metadata
     const asset_id = await this.postLookAsset(transaction)
-    log('asset_id', asset_id)
+    log('asset_id:', asset_id)
 
     // get bucket for this catalog - using first one for now
     const bucket = await this.getBucket(transaction)
-    log('bucket', bucket)
+    log('bucket:', bucket)
 
     // get PNG from looker API
     const buffer = await this.getLookerPngBuffer(transaction)
-    log('buffer', !! buffer)
+    log('buffer:', fileType(buffer))
 
     const hash = await this.getHashForBuffer(buffer)
     log('hash:', hash)
