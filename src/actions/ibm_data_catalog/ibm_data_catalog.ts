@@ -9,18 +9,18 @@ import * as url from 'url'
 const fileType = require('file-type')
 
 const BEARER_TOKEN_API = 'https://iam.ng.bluemix.net/identity/token'
-const DATACATALOG_API = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
+const DATA_CATALOG_API = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
 const COS_API = 'https://s3-api.us-geo.objectstorage.softlayer.net'
 const CHECK_RENDER_MAX_ATTEMPTS = 100
 const CHECK_RENDER_INTERVAL = 2000
 
 const QUERY_RENDER_PARAMS: any = {
-  width: 600,
-  height: 600,
+  width: 800,
+  height: 800,
 }
 const DASHBOARD_RENDER_PARAMS: any = {
-  width: 600,
-  height: 1200,
+  width: 800,
+  height: 2000,
 }
 
 function log(...args: any[]) {
@@ -242,7 +242,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'POST',
-        uri: `${DATACATALOG_API}/assets?catalog_id=${transaction.catalog_id}`,
+        uri: `${DATA_CATALOG_API}/assetsboo?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -291,7 +291,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'POST',
-        uri: `${DATACATALOG_API}/assets?catalog_id=${transaction.catalog_id}`,
+        uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -330,7 +330,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'GET',
-        uri: `${DATACATALOG_API}/catalogs/${transaction.catalog_id}/asset_buckets`,
+        uri: `${DATA_CATALOG_API}/catalogs/${transaction.catalog_id}/asset_buckets`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -582,7 +582,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const options = {
       method: 'POST',
-      uri: `${DATACATALOG_API}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
+      uri: `${DATA_CATALOG_API}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
       headers: {
         'Authorization': `Bearer ${transaction.bearer_token}`,
         'Accept': 'application/json',
@@ -606,7 +606,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'POST',
-        uri: `${DATACATALOG_API}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
+        uri: `${DATA_CATALOG_API}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -682,7 +682,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'POST',
-        uri: `${DATACATALOG_API}/assets/${asset_id}/attachments/${attachment_id}/complete?catalog_id=${transaction.catalog_id}`,
+        uri: `${DATA_CATALOG_API}/assets/${asset_id}/attachments/${attachment_id}/complete?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -867,7 +867,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'GET',
-        uri: `${DATACATALOG_API}/catalogs?limit=25`,
+        uri: `${DATA_CATALOG_API}/catalogs?limit=25`,
         headers: {
           'Authorization': 'Bearer ' + bearer_token,
           'Accept': 'application/json',
