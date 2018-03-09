@@ -24,6 +24,14 @@ function log() {
 // URL parser
 const url = require('url')
 const look_url = 'https://4mile.looker.com/looks/7?qid=M4jjgyvm3oBA23u57Ame5K'
-const u = url.parse(look_url)
+const item_url = url.parse(look_url)
 
-log(u)
+const file_name = (
+    item_url.pathname
+    .split('/')
+    .filter(param => !! param)
+    .join('_')
+    + '.png'
+  )
+
+log(file_name)

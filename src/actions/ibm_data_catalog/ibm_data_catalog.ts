@@ -192,11 +192,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     // log('buffer:', isMime.checkBuffer('image/png', buffer))
     log('buffer:', buffer.length)
 
-    const hash = await this.getHashForBuffer(buffer)
-    log('hash:', hash)
-
     // upload PNG to IBM Cloud Object Storage (COS)
-    const png_path = await this.uploadPngToIbmCos(bucket, buffer, hash, transaction)
+    const png_path = await this.uploadPngToIbmCos(bucket, buffer, transaction)
     log('png_path:', png_path)
 
     // // add attachment to the asset, pointing to PNG in COS
@@ -311,10 +308,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return buffer
   }
 
-  getLookerRenderUrl(transaction: Transaction) {
-    log('getLookerRenderUrl')
-    const { looker_api_url } = transaction.request.params
-
+  getLookerItemUrl(transaction: Transaction) {
     const item_url = (
       transaction.request.scheduledPlan
       && transaction.request.scheduledPlan.url
@@ -323,7 +317,17 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const parsed_url = url.parse(item_url)
 
-    return `${looker_api_url}/render_tasks${parsed_url.pathname}/png?width=600&height=600`
+    return parsed_url
+  }
+
+  getLookerRenderUrl(transaction: Transaction) {
+    log('getLookerRenderUrl')
+    const { looker_api_url } = transaction.request.params
+
+    const item_url = this.getLookerItemUrl(transaction)
+    if (! item_url) return
+
+    return `${looker_api_url}/render_tasks${item_url.pathname}/png?width=600&height=600`
   }
 
   async startLookerRender(transaction: Transaction) {
@@ -413,13 +417,65 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return reqPromise(options)
   }
 
-  async uploadPngToIbmCos(bucket: any, buffer: Buffer, hash: string, transaction: Transaction) {
+  async uploadPngToIbmCos(bucket: any, buffer: Buffer, transaction: Transaction) {
     log('uploadPngToIbmCos')
-    log('bucket:', bucket)
-    log('buffer.length:', buffer.length)
+
+    const hash = await this.getHashForBuffer(buffer)
     log('hash:', hash)
-    log('transaction.type:', transaction.type)
-    log('COS_API:', COS_API)
+
+    return new Promise<string>((resolve, reject) => {
+      log('bucket:', bucket)
+      log('buffer.length:', buffer.length)
+      log('hash:', hash)
+      log('transaction.type:', transaction.type)
+      log('COS_API:', COS_API)
+
+      const file_name = this.getPngFilename(transaction)
+      log('file_name:', file_name)
+
+      const file_url = `${COS_API}/${bucket.bucket_name}/${file_name}`
+
+      const options = {
+        method: 'PUT',
+        uri: `${file_url}?x-amz-content-sha256=${hash}`,
+        headers: {
+          'Authorization': `Bearer ${transaction.bearer_token}`,
+          'Content-Type': 'image/png',
+        },
+      }
+
+      // create a stream from our buffer
+      const bufferStream = new stream.PassThrough()
+      bufferStream.end(buffer)
+
+      // PUT the buffer to the attachment_upload_url
+      bufferStream.pipe(
+        req(options)
+        .on('response', (res) => {
+          log('res', res)
+          resolve(file_name)
+        })
+        .on('error', (err) => {
+          log('err', err)
+          reject(err)
+        })
+      )
+
+    })
+  }
+
+  getPngFilename(transaction: Transaction) {
+    const item_url = this.getLookerItemUrl(transaction)
+    if (! item_url) return
+
+    const file_name = (
+      item_url.pathname
+      .split('/')
+      .filter(param => !! param)
+      .join('_')
+    )
+
+    return `${file_name}_${Date.now()}.png`
   }
 
   async getHashForBuffer(buffer: Buffer) {
@@ -445,6 +501,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async postAttachmentToAsset(asset_id: string, png_path: string, transaction: Transaction) {
     log('postAttachmentToAsset')
+    log('png_path:', png_path)
 
     return new Promise<any>((resolve, reject) => {
 
