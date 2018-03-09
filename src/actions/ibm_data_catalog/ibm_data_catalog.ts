@@ -247,7 +247,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       reqPromise(options)
       .then(response => {
         try {
-          if (! response.asset_id) throw new Error('response does not include access_token')
+          if (! response.asset_id) throw new Error('Response does not include access_token.')
           resolve(response.asset_id)
         } catch(err) {
           reject(err)
@@ -274,7 +274,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       .then(response => {
         try {
           const bucket = response.resources[0]
-          if (! bucket) throw new Error('response does not include resources')
+          if (! bucket) throw new Error('Response does not include resources.')
           resolve(bucket)
         } catch(err) {
           reject(err)
@@ -293,6 +293,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   getLookerRenderUrl(transaction: Transaction) {
+    log('getLookerRenderUrl')
     const {
       looker_api_url,
     } = transaction.request.params
@@ -309,40 +310,35 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async renderLookerPng(transaction: Transaction) {
-    // const {
-    //   looker_api_url,
-    //   looker_api_client_id,
-    //   looker_api_client_secret,
-    // } = transaction.request.params
-
-    const render_url = this.getLookerRenderUrl(transaction)
-    log('render_url', render_url)
-
-
-    // const options = {
-    //   method: 'POST',
-    //   uri: `${looker_api_url}/render_tasks/?client_id=${looker_api_client_id}&client_secret=${looker_api_client_secret}`,
-    //   headers: {
-    //     'Accept': 'application/json',
-    //   },
-    //   json: true
-    // }
+    log('renderLookerPng')
 
     return new Promise<string>((resolve, reject) => {
-      resolve('hey')
-      // reqPromise(options)
-      // .then(response => {
-      //   try {
-      //     if (response.access_token) {
-      //       log('looker_token received')
-      //       return resolve(response.access_token)
-      //     }
-      //     throw new Error('response does not include access_token')
-      //   } catch(err) {
-      //     reject(err)
-      //   }
-      // })
-      // .catch(reject)
+      const render_url = this.getLookerRenderUrl(transaction)
+      log('render_url', render_url)
+
+      if (! render_url) return reject('Unabled to get render_url.')
+
+      const options = {
+        method: 'POST',
+        uri: render_url,
+        headers: {
+          'Authorization': `token ${transaction.looker_token}`,
+          'Accept': 'application/json',
+        },
+        json: true
+      }
+
+      reqPromise(options)
+      .then(response => {
+        try {
+          if (! response.id) throw new Error('Response does not include id.')
+          log('render_id', response.id)
+          resolve(response.id)
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
     })
   }
 
@@ -399,8 +395,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         try {
           const attachment_id = response.attachment_id
           const attachment_upload_url = response.url1
-          if (! attachment_id) throw new Error('response does not include attachment_id')
-          if (! attachment_upload_url) throw new Error('response does not include url1')
+          if (! attachment_id) throw new Error('Response does not include attachment_id.')
+          if (! attachment_upload_url) throw new Error('Response does not include url1.')
           resolve({
             attachment_id,
             attachment_upload_url,
@@ -588,11 +584,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       reqPromise(options)
       .then(response => {
         try {
-          if (response.access_token) {
-            log('bearer_token received')
-            return resolve(response.access_token)
-          }
-          throw new Error('response does not include access_token')
+          if (! response.access_token) throw new Error('Response does not include access_token.')
+          log('bearer_token received')
+          resolve(response.access_token)
         } catch(err) {
           reject(err)
         }
@@ -623,11 +617,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       reqPromise(options)
       .then(response => {
         try {
-          if (response.access_token) {
-            log('looker_token received')
-            return resolve(response.access_token)
-          }
-          throw new Error('response does not include access_token')
+          if (! response.access_token) throw new Error('Response does not include access_token.')
+          log('looker_token received')
+          resolve(response.access_token)
         } catch(err) {
           reject(err)
         }
