@@ -292,11 +292,14 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async getLookerPngBuffer(transaction: Transaction) {
     log('getLookerPngBuffer')
 
-    const render_id = await this.renderLookerPng(transaction)
-    log('render_id', render_id)
+    const render_id = await this.startLookerRender(transaction)
+    log('render_id:', render_id)
 
     const ready = await this.checkLookerRender(render_id, transaction)
-    log('ready', ready)
+    log('ready:', ready)
+
+    const download = await this.downloadLookerRender(render_id, transaction)
+    log('download:', typeof download)
   }
 
   getLookerRenderUrl(transaction: Transaction) {
@@ -314,12 +317,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return `${looker_api_url}/render_tasks${parsed_url.pathname}/png?width=600&height=600`
   }
 
-  async renderLookerPng(transaction: Transaction) {
-    log('renderLookerPng')
+  async startLookerRender(transaction: Transaction) {
+    log('startLookerRender')
 
     return new Promise<string>((resolve, reject) => {
       const render_url = this.getLookerRenderUrl(transaction)
-      log('render_url', render_url)
+      log('render_url:', render_url)
 
       if (! render_url) return reject('Unabled to get render_url.')
 
@@ -348,6 +351,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async checkLookerRender(render_id: string, transaction: Transaction) {
     log('checkLookerRender')
+
     return new Promise<boolean>((resolve, reject) => {
       if (transaction.render_check_attempts < CHECK_RENDER_MAX_ATTEMPTS) {
         return reject('Unable to check render status.')
@@ -373,7 +377,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           try {
             if (! response.status) throw new Error('Response does not include status.')
             if (response.status === 'success') return resolve(true)
-            log('status', response.status)
+            log('status:', response.status)
             resolve(this.checkLookerRender(render_id, transaction))
           } catch(err) {
             reject(err)
@@ -381,6 +385,36 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         })
         .catch(reject)
       }, CHECK_RENDER_INTERVAL)
+
+    })
+  }
+
+  async downloadLookerRender(render_id: string, transaction: Transaction) {
+    log('downloadLookerRender')
+
+    return new Promise<Buffer>((resolve, reject) => {
+      const { looker_api_url } = transaction.request.params
+
+      const options = {
+        method: 'GET',
+        uri: `${looker_api_url}/render_tasks/${render_id}/results`,
+        headers: {
+          'Authorization': `token ${transaction.looker_token}`,
+          'Accept': 'application/json',
+        },
+        json: true
+      }
+
+      reqPromise(options)
+      .then(response => {
+        try {
+          log(Object.keys(response))
+          resolve(response)
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
 
     })
   }
