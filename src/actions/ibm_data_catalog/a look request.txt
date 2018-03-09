@@ -497,7 +497,6 @@ handleLookTransaction
             "value": 38.93999978899956
           },
           "inventory_items.id": {
-nfo method=POST path="/actions/ibm_data_catalog/execute" host=looker-action-hub.herokuapp.com request_id=77891e54-d2da-4ee4-867a-0de84e4c2fce fwd="54.208.10.167" dyno=web.1 connect=1ms service=181ms status=200 bytes=268 protocol=https
             "value": 153103
           },
           "inventory_items.product_brand": {
@@ -658,4 +657,3 @@ nfo method=POST path="/actions/ibm_data_catalog/execute" host=looker-action-hub.
   "webhookId": "e0b35023e37c0bafa4d29b388b3187da"
 }
 ----------------------------------------
-info: HTTP POST /actions/ibm_data_catalog/execute statusCode=200, url=/actions/ibm_data_catalog/execute, method=POST, httpVersion=1.1, originalUrl=/actions/ibm_data_catalog/execute, , responseTime=164, url=/actions/ibm_data_catalog/execute, ip=::ffff:10.5.221.41, statusCode=200, instanceId=9a025967bab717ddee35421b5ac4e77a, webhookId=e0b35023e37c0bafa4d29b388b3187da

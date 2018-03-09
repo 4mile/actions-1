@@ -48,6 +48,7 @@ interface Transaction {
   request: Hub.ActionRequest,
   type: string,
   bearer_token: string,
+  looker_token: string,
   catalog_id: string,
 }
 
@@ -106,23 +107,31 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   private async getTransactionFromRequest(request: Hub.ActionRequest) {
-    const bearer_token = await this.getBearerToken(request)
-
     return new Promise<Transaction>((resolve, reject) => {
 
-      const catalog_id = request.formParams && request.formParams.catalog_id
+      const { catalog_id } = request.formParams
       if (! catalog_id) {
-        reject("Missing catalog.")
+        reject("Missing catalog_id.")
         return
       }
 
       const type = this.getRequestType(request)
+      if (! type) {
+        reject("Unable to determine request type.")
+        return
+      }
 
-      resolve({
-        request,
-        type,
-        bearer_token,
-        catalog_id
+      Promise.all([
+        this.getBearerToken(request),
+        this.getLookerToken(request),
+      ]).then(([bearer_token, looker_token]) => {
+        resolve({
+          request,
+          type,
+          bearer_token,
+          looker_token,
+          catalog_id
+        })
       })
 
     })
@@ -170,8 +179,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const bucket = await this.getBucket(transaction)
     log('bucket', bucket)
 
-    // // get PNG from looker API
-    // const png_buffer = await this.getLookerLookPng(transaction)
+    // get PNG from looker API
+    const png_buffer = await this.getLookerLookPng(transaction)
+    log('png_buffer', !! png_buffer)
 
     // // upload PNG to IBM Cloud Object Storage (COS)
     // const png_path = await this.uploadPngToIbmCos(png_buffer, transaction)
@@ -274,9 +284,13 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async getLookerLookPng(transaction: Transaction) {}
+  async getLookerLookPng(transaction: Transaction) {
+    log('getLookerLookPng', transaction)
+  }
 
-  async uploadPngToIbmCos(png_buffer: Buffer, transaction: Transaction) {}
+  async uploadPngToIbmCos(png_buffer: Buffer, transaction: Transaction) {
+    log('uploadPngToIbmCos', png_buffer, transaction)
+  }
 
   async getHashForBuffer(buffer: Buffer) {
     return new Promise<string>((resolve, reject) => {
@@ -516,7 +530,45 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       reqPromise(options)
       .then(response => {
         try {
-          if (response.access_token) return resolve(response.access_token)
+          if (response.access_token) {
+            log('bearer_token received')
+            return resolve(response.access_token)
+          }
+          throw new Error('response does not include access_token')
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
+    })
+  }
+
+  private async getLookerToken(request: Hub.ActionRequest) {
+    // obtain a looker API token using client_id / client_secret
+
+    const {
+      looker_api_url,
+      looker_api_client_id,
+      looker_api_client_secret,
+    } = request.params
+
+    const options = {
+      method: 'POST',
+      uri: `${looker_api_url}/login?client_id=${looker_api_client_id}&client_secret=${looker_api_client_secret}`,
+      headers: {
+        'Accept': 'application/json',
+      },
+      json: true
+    }
+
+    return new Promise<string>((resolve, reject) => {
+      reqPromise(options)
+      .then(response => {
+        try {
+          if (response.access_token) {
+            log('looker_token received')
+            return resolve(response.access_token)
+          }
           throw new Error('response does not include access_token')
         } catch(err) {
           reject(err)
@@ -528,7 +580,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async getCatalogs(request: Hub.ActionRequest) {
     const bearer_token = await this.getBearerToken(request)
-    log('bearer_token', bearer_token)
 
     return new Promise<Catalog[]>((resolve, reject) => {
 
