@@ -2,12 +2,10 @@ import * as Hub from "../../hub"
 import * as stream from "stream"
 import * as req from "request"
 import * as reqPromise from "request-promise-native"
+import * as crypto from 'crypto'
 
 const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
-
-// NOTE: getting catalogs: null when using v3 of this endpoint
-const CATALOGS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/catalogs?limit=25'
-const ASSETS_URI = 'https://catalogs-yp-prod.mybluemix.net:443/v2/assets'
+const BASE_URL = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
 
 function log(...args: any[]) {
   console.log.apply(console, args)
@@ -62,13 +60,34 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
   supportedFormats = [Hub.ActionFormat.JsonDetail, Hub.ActionFormat.CsvZip]
   requiredFields = []
-  params = [{
-    name: "ibm_cloud_api_key",
-    label: "IBM Cloud API Key",
-    required: true,
-    description: "Visit https://console-regional.ng.bluemix.net/#overview and go to Manage > Security > Platform API Keys.",
-    sensitive: true,
-  }]
+  params = [
+    {
+      name: "ibm_cloud_api_key",
+      label: "IBM Cloud API Key",
+      required: true,
+      description: "Visit https://console-regional.ng.bluemix.net/#overview and go to Manage > Security > Platform API Keys.",
+      sensitive: true,
+    },
+    {
+      name: "looker_api_url",
+      label: "Looker API URL",
+      required: true,
+      description: "Full API URL, e.g. https://instance.looker.com:19999/api/3.0 - Used to fetch Look and Dashboard previews",
+      sensitive: false,
+    },
+    {
+      name: "looker_api_client_id",
+      label: "Looker API Client ID",
+      required: true,
+      sensitive: true,
+    },
+    {
+      name: "looker_api_client_secret",
+      label: "Looker API Client Secret",
+      required: true,
+      sensitive: true,
+    },
+  ]
 
   async execute(request: Hub.ActionRequest) {
     log('request.type', request.type)
@@ -145,21 +164,20 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     // POST looker_query asset with metadata
     const asset_id = await this.postLookAsset(transaction)
-
     log('asset_id', asset_id)
 
-    // POST attachment metadata to asset, returns attachment_id and signed PUT URL
-    // const { attachment_id, attachment_upload_url } = await this.postAttachmentToAsset(asset_id, transaction)
+    // get bucket for this catalog - using first one for now
+    const bucket = await this.getBucket(transaction)
+    log('bucket', bucket)
 
-    // log('attachment_id', attachment_id)
-    // log('attachment_upload_url', attachment_upload_url)
+    // // get PNG from looker API
+    // const png_buffer = await this.getLookerLookPng(transaction)
 
-    // // format look data as CSV (for now, input with be constrained to csv)
-    // // PUT CSV to signed PUT URL
-    // await this.uploadAttachment(attachment_upload_url, transaction)
+    // // upload PNG to IBM Cloud Object Storage (COS)
+    // const png_path = await this.uploadPngToIbmCos(png_buffer, transaction)
 
-    // // POST to complete endpoint?
-    // await this.postAttachmentComplete(asset_id, attachment_id, transaction)
+    // // add attachment to the asset, pointing to PNG in COS
+    // await this.postAttachmentToAsset(asset_id, png_path, transaction)
 
     return new Promise<Hub.ActionResponse>((resolve) => {
       // TODO what response?
@@ -193,7 +211,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'POST',
-        uri: `${ASSETS_URI}?catalog_id=${transaction.catalog_id}`,
+        uri: `${BASE_URL}/assets?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -215,8 +233,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         }
       }
 
-      log('options', options)
-
       reqPromise(options)
       .then(response => {
         try {
@@ -230,14 +246,67 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async postAttachmentToAsset(asset_id: string, transaction: Transaction) {
+  async getBucket(transaction: Transaction) {
+    return new Promise<any>((resolve, reject) => {
+
+      const options = {
+        method: 'POST',
+        uri: `${BASE_URL}/catalogs/${transaction.catalog_id}/asset_buckets`,
+        headers: {
+          'Authorization': `Bearer ${transaction.bearer_token}`,
+          'Accept': 'application/json',
+        },
+        json: true,
+      }
+
+      reqPromise(options)
+      .then(response => {
+        try {
+          const bucket = response.resources[0]
+          if (! bucket) throw new Error('response does not include resources')
+          resolve(bucket)
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
+
+    })
+  }
+
+  async getLookerLookPng(transaction: Transaction) {}
+
+  async uploadPngToIbmCos(png_buffer: Buffer, transaction: Transaction) {}
+
+  async getHashForBuffer(buffer: Buffer) {
+    return new Promise<string>((resolve, reject) => {
+      const hash = crypto.createHash('sha256')
+
+      const timer = setTimeout(() => {
+        reject('unable to create hash')
+      }, 10000)
+
+      hash.on('readable', () => {
+        const data = hash.read()
+        if (data) {
+          clearTimeout(timer)
+          resolve(data.toString('hex'))
+        }
+      })
+
+      hash.write(buffer)
+      hash.end()
+    })
+  }
+
+  async postAttachmentToAsset(asset_id: string, png_path: string, transaction: Transaction) {
     log('postAttachmentToAsset')
 
     return new Promise<any>((resolve, reject) => {
 
       const options = {
         method: 'POST',
-        uri: `${ASSETS_URI}/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
+        uri: `${BASE_URL}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -313,7 +382,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'POST',
-        uri: `${ASSETS_URI}/${asset_id}/attachments/${attachment_id}/complete?catalog_id=${transaction.catalog_id}`,
+        uri: `${BASE_URL}/assets/${asset_id}/attachments/${attachment_id}/complete?catalog_id=${transaction.catalog_id}`,
         headers: {
           'Authorization': `Bearer ${transaction.bearer_token}`,
           'Accept': 'application/json',
@@ -465,7 +534,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: 'GET',
-        uri: CATALOGS_URI,
+        uri: `${BASE_URL}/catalogs?limit=25`,
         headers: {
           'Authorization': 'Bearer ' + bearer_token,
           'Accept': 'application/json',
