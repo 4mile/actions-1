@@ -353,7 +353,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('checkLookerRender')
 
     return new Promise<boolean>((resolve, reject) => {
-      if (transaction.render_check_attempts < CHECK_RENDER_MAX_ATTEMPTS) {
+      if (transaction.render_check_attempts > CHECK_RENDER_MAX_ATTEMPTS) {
         return reject('Unable to check render status.')
       }
 
