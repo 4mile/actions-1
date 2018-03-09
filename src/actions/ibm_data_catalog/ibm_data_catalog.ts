@@ -181,7 +181,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('bucket', bucket)
 
     // get PNG from looker API
-    const png_buffer = await this.getLookerLookPng(transaction)
+    const png_buffer = await this.getLookerPngBuffer(transaction)
     log('png_buffer', !! png_buffer)
 
     // // upload PNG to IBM Cloud Object Storage (COS)
@@ -285,11 +285,45 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async getLookerLookPng(transaction: Transaction) {
-    log('getLookerLookPng')
+  async getLookerPngBuffer(transaction: Transaction) {
+    log('getLookerPngBuffer')
 
     const render_id = await this.renderLookerPng(transaction)
     log('render_id', render_id)
+
+    const ready = await this.checkLookerRender(render_id, transaction)
+    log('render ready', ready)
+
+  }
+
+  async checkLookerRender(render_id: string, transaction: Transaction) {
+    return new Promise<boolean>((resolve, reject) => {
+      const {
+        looker_api_url,
+      } = transaction.request.params
+
+      const options = {
+        method: 'POST',
+        uri: `${looker_api_url}/render_tasks/${render_id}`,
+        headers: {
+          'Authorization': `token ${transaction.looker_token}`,
+          'Accept': 'application/json',
+        },
+        json: true
+      }
+
+      reqPromise(options)
+      .then(response => {
+        try {
+          if (! response.status) throw new Error('Response does not include status.')
+          log('status', response.status)
+          resolve(response.status === 'success')
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
+    })
   }
 
   getLookerRenderUrl(transaction: Transaction) {
@@ -332,7 +366,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       .then(response => {
         try {
           if (! response.id) throw new Error('Response does not include id.')
-          log('render_id', response.id)
           resolve(response.id)
         } catch(err) {
           reject(err)
