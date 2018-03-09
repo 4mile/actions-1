@@ -291,46 +291,16 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const render_id = await this.renderLookerPng(transaction)
     log('render_id', render_id)
 
-    const ready = await this.checkLookerRender(render_id, transaction)
-    log('render ready', ready)
-
-  }
-
-  async checkLookerRender(render_id: string, transaction: Transaction) {
-    return new Promise<boolean>((resolve, reject) => {
-      const {
-        looker_api_url,
-      } = transaction.request.params
-
-      const options = {
-        method: 'POST',
-        uri: `${looker_api_url}/render_tasks/${render_id}`,
-        headers: {
-          'Authorization': `token ${transaction.looker_token}`,
-          'Accept': 'application/json',
-        },
-        json: true
-      }
-
-      reqPromise(options)
-      .then(response => {
-        try {
-          if (! response.status) throw new Error('Response does not include status.')
-          log('status', response.status)
-          resolve(response.status === 'success')
-        } catch(err) {
-          reject(err)
-        }
+    setTimeout(() => {
+      this.checkLookerRender(render_id, transaction).then(status => {
+        log('render status:', status)
       })
-      .catch(reject)
-    })
+    }, 10000)
   }
 
   getLookerRenderUrl(transaction: Transaction) {
     log('getLookerRenderUrl')
-    const {
-      looker_api_url,
-    } = transaction.request.params
+    const { looker_api_url } = transaction.request.params
 
     const item_url = (
       transaction.request.scheduledPlan
@@ -367,6 +337,34 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         try {
           if (! response.id) throw new Error('Response does not include id.')
           resolve(response.id)
+        } catch(err) {
+          reject(err)
+        }
+      })
+      .catch(reject)
+    })
+  }
+
+  async checkLookerRender(render_id: string, transaction: Transaction) {
+    return new Promise<string>((resolve, reject) => {
+      const { looker_api_url } = transaction.request.params
+
+      const options = {
+        method: 'POST',
+        uri: `${looker_api_url}/render_tasks/${render_id}`,
+        headers: {
+          'Authorization': `token ${transaction.looker_token}`,
+          'Accept': 'application/json',
+        },
+        json: true
+      }
+
+      reqPromise(options)
+      .then(response => {
+        try {
+          if (! response.status) throw new Error('Response does not include status.')
+          log('status', response.status)
+          resolve(response.status)
         } catch(err) {
           reject(err)
         }
