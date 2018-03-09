@@ -153,9 +153,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   private getAssetType(type: Hub.ActionType) {
     switch (type) {
       case Hub.ActionType.Query:
-        return 'looker_query'
+        return 'Looker Query'
       case Hub.ActionType.Dashboard:
-        return 'looker_dashboard'
+        return 'Looker Dashboard'
       default:
         return
     }
@@ -258,8 +258,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             rating: 0
           },
           entity: {
-            looker_query: entity_data,
-            // looker_query: {},
+            [asset_type]: entity_data,
           }
         }
       }
@@ -308,7 +307,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             rating: 0
           },
           entity: {
-            looker_dashboard: entity_data,
+            [asset_type]: entity_data,
           }
         }
       }
