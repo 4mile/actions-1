@@ -4,9 +4,9 @@ import * as req from "request"
 import * as reqPromise from "request-promise-native"
 import * as crypto from 'crypto'
 import * as url from 'url'
-import * as fs from 'fs'
+// import * as fs from 'fs'
 // const isMime = require('is-mime')
-// const fileType = require('file-type')
+const fileType = require('file-type')
 
 const BEARER_TOKEN_API = 'https://iam.ng.bluemix.net/identity/token'
 const DATACATALOG_API = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
@@ -190,8 +190,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     // get PNG from looker API
     const buffer = await this.getLookerPngBuffer(transaction)
-    // log('buffer:', isMime.checkBuffer('image/png', buffer))
-    log('buffer:', buffer.length)
+    log('typeof buffer:', typeof buffer)
+    log('fileType buffer:', fileType(buffer))
+    log('buffer.length:', buffer.length)
 
     // upload PNG to IBM Cloud Object Storage (COS)
     const png_path = await this.uploadPngToIbmCos(bucket, buffer, transaction)
@@ -403,19 +404,27 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async downloadLookerRender(render_id: string, transaction: Transaction) {
-    log('downloadLookerRender')
+    return new Promise<Buffer>((resolve, reject) => {
+      log('downloadLookerRender')
 
-    const { looker_api_url } = transaction.request.params
+      const { looker_api_url } = transaction.request.params
 
-    const options = {
-      method: 'GET',
-      uri: `${looker_api_url}/render_tasks/${render_id}/results`,
-      headers: {
-        'Authorization': `token ${transaction.looker_token}`,
-      },
-    }
+      const options = {
+        method: 'GET',
+        uri: `${looker_api_url}/render_tasks/${render_id}/results`,
+        headers: {
+          'Authorization': `token ${transaction.looker_token}`,
+        },
+        encoding: null,
+      }
 
-    return reqPromise(options)
+      req(options, (err, res, body) => {
+        if (err) return reject(err)
+        resolve(body)
+      })
+
+    })
+
   }
 
   async uploadPngToIbmCos(bucket: any, buffer: Buffer, transaction: Transaction) {
@@ -425,12 +434,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('hash:', hash)
 
     return new Promise<string>((resolve, reject) => {
-      log('bucket:', bucket)
-      log('buffer.length:', buffer.length)
-      log('hash:', hash)
-      log('transaction.type:', transaction.type)
-      log('COS_API:', COS_API)
-
       const file_name = this.getPngFilename(transaction)
       log('file_name:', file_name)
 
@@ -448,14 +451,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       // create a stream from our buffer
       const bufferStream = new stream.PassThrough()
-      const local_file = fs.readFileSync('./ibm_logo.png')
-      bufferStream.end(local_file)
+      bufferStream.end(buffer)
 
       // PUT the buffer to the attachment_upload_url
       bufferStream.pipe(
         req(options)
-        .on('response', (res) => {
-          log('res', res)
+        .on('response', () => {
           resolve(file_url)
         })
         .on('error', (err) => {

@@ -4,7 +4,7 @@ function log() {
 
 // hash test
 // const crypto = require('crypto')
-// const fs = require('fs')
+const fs = require('fs')
 
 // const file = fs.readFileSync('./download.png')
 
@@ -22,16 +22,23 @@ function log() {
 
 
 // URL parser
-const url = require('url')
-const look_url = 'https://4mile.looker.com/looks/7?qid=M4jjgyvm3oBA23u57Ame5K'
-const item_url = url.parse(look_url)
+// const url = require('url')
+// const look_url = 'https://4mile.looker.com/looks/7?qid=M4jjgyvm3oBA23u57Ame5K'
+// const item_url = url.parse(look_url)
 
-const file_name = (
-    item_url.pathname
-    .split('/')
-    .filter(param => !! param)
-    .join('_')
-    + '.png'
-  )
+// const file_name = (
+//     item_url.pathname
+//     .split('/')
+//     .filter(param => !! param)
+//     .join('_')
+//     + '.png'
+//   )
 
-log(file_name)
+// log(file_name)
+
+
+
+// mime check
+const fileType = require('file-type')
+const file = fs.readFileSync('./download.png')
+log(fileType(file))
