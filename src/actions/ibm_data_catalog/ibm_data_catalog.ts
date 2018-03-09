@@ -7,6 +7,8 @@ import * as url from 'url'
 
 const BEARER_TOKEN_URI = 'https://iam.ng.bluemix.net/identity/token'
 const BASE_URL = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
+const CHECK_RENDER_MAX_ATTEMPTS = 100
+const CHECK_RENDER_INTERVAL = 2000
 
 function log(...args: any[]) {
   console.log.apply(console, args)
@@ -347,7 +349,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async checkLookerRender(render_id: string, transaction: Transaction) {
     log('checkLookerRender')
     return new Promise<boolean>((resolve, reject) => {
-      if (transaction.render_check_attempts > 100) reject('Unable to check render status.')
+      if (transaction.render_check_attempts < CHECK_RENDER_MAX_ATTEMPTS) {
+        return reject('Unable to check render status.')
+      }
+
       transaction.render_check_attempts += 1
 
       const { looker_api_url } = transaction.request.params
@@ -375,7 +380,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           }
         })
         .catch(reject)
-      }, 1000)
+      }, CHECK_RENDER_INTERVAL)
 
     })
   }
