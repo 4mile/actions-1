@@ -131,10 +131,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log('handleLookTransaction')
     this.debugRequest(transaction.request)
 
-    // // POST looker_look asset with metadata
-    // const asset_id = await this.postLookAsset(transaction)
+    // POST looker_look asset with metadata
+    const asset_id = await this.postLookAsset(transaction)
 
-    // log('asset_id', asset_id)
+    log('asset_id', asset_id)
 
     // // POST attachment metadata to asset, returns attachment_id and signed PUT URL
     // const { attachment_id, attachment_upload_url } = await this.postAttachmentToAsset(asset_id, transaction)
@@ -161,14 +161,17 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     return new Promise<string>((resolve, reject) => {
       const { request } = transaction
+      const { attachment = {} } = request
       const { scheduledPlan = {} } = request
 
       const { title, url } = scheduledPlan
-      const share_url = (
-        scheduledPlan
-        && scheduledPlan.query
-        && scheduledPlan.query.share_url
-      )
+
+      const entity_data = {
+        attachment,
+        scheduledPlan,
+      }
+
+      delete entity_data.attachment.dataJSON.data
 
       const options = {
         method: 'POST',
@@ -187,14 +190,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             rating: 0
           },
           entity: {
-            looker_look: {
-              asset_type: "data_asset",
-              type: "Look",
-              mime_type: 'text/csv',
-              title,
-              url,
-              share_url,
-            }
+            looker_query: entity_data,
           }
         }
       }
