@@ -30,12 +30,12 @@ NOTES:
 
 */
 
-interface Catalog {
+export interface Catalog {
   guid: string,
   label: string,
 }
 
-interface Transaction {
+export interface Transaction {
   request: Hub.ActionRequest,
   type: string,
   bearerToken: string,
