@@ -1,16 +1,16 @@
-import * as Hub from "../../hub"
-import * as stream from "stream"
+import * as crypto from "crypto"
 import * as req from "request"
 import * as reqPromise from "request-promise-native"
-import * as crypto from 'crypto'
-import * as url from 'url'
+import * as stream from "stream"
+import * as url from "url"
+import * as Hub from "../../hub"
 // import * as fs from 'fs'
 // const isMime = require('is-mime')
-const fileType = require('file-type')
+const fileType = require("file-type")
 
-const BEARER_TOKEN_API = 'https://iam.ng.bluemix.net/identity/token'
-const DATA_CATALOG_API = 'https://catalogs-yp-prod.mybluemix.net:443/v2'
-const COS_API = 'https://s3-api.us-geo.objectstorage.softlayer.net'
+const BEARER_TOKEN_API = "https://iam.ng.bluemix.net/identity/token"
+const DATA_CATALOG_API = "https://catalogs-yp-prod.mybluemix.net:443/v2"
+const COS_API = "https://s3-api.us-geo.objectstorage.softlayer.net"
 const CHECK_RENDER_MAX_ATTEMPTS = 100
 const CHECK_RENDER_INTERVAL = 2000
 
@@ -40,11 +40,11 @@ interface Catalog {
 interface Transaction {
   request: Hub.ActionRequest,
   type: string,
-  bearer_token: string,
-  looker_token: string,
-  catalog_id: string,
-  asset_type: string,
-  render_check_attempts: number,
+  bearerToken: string,
+  lookerToken: string,
+  catalogId: string,
+  assetType: string,
+  renderCheckAttempts: number,
 }
 
 export class IbmDataCatalogAssetAction extends Hub.Action {
@@ -61,14 +61,20 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       name: "ibm_cloud_api_key",
       label: "IBM Cloud API Key",
       required: true,
-      description: "Visit https://console-regional.ng.bluemix.net/#overview and go to Manage > Security > Platform API Keys.",
+      description: `
+        Visit https://console-regional.ng.bluemix.net/#overview
+        and go to Manage > Security > Platform API Keys.
+      `,
       sensitive: true,
     },
     {
       name: "looker_api_url",
       label: "Looker API URL",
       required: true,
-      description: "Full API URL, e.g. https://instance.looker.com:19999/api/3.0 - Used to fetch Look and Dashboard previews",
+      description: `
+        Full API URL, e.g. https://instance.looker.com:19999/api/3.0 —
+        Used to fetch Look and Dashboard previews
+      `,
       sensitive: false,
     },
     {
@@ -85,10 +91,35 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     },
   ]
 
+  async form(request: Hub.ActionRequest) {
+    this.debugRequest(request)
+
+    const form = new Hub.ActionForm()
+    const catalogs = await this.getCatalogs(request)
+
+    form.fields = [
+      {
+        description: "Name of the catalog to send to",
+        label: "Send to",
+        name: "catalogId",
+        options: catalogs.map((catalog) => {
+          return {
+            name: catalog.guid,
+            label: catalog.label,
+          }
+        }),
+        required: true,
+        type: "select",
+      },
+    ]
+
+    return form
+  }
+
   async execute(request: Hub.ActionRequest) {
-    log('request.type', request.type)
+    log("request.type", request.type)
     const transaction = await this.getTransactionFromRequest(request)
-    log('determined type', transaction.type)
+    log("determined type", transaction.type)
 
     return this.handleTransaction(transaction)
   }
@@ -96,8 +127,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   private async getTransactionFromRequest(request: Hub.ActionRequest) {
     return new Promise<Transaction>((resolve, reject) => {
 
-      const { catalog_id } = request.formParams
-      if (! catalog_id) {
+      const { catalogId } = request.formParams
+      if (! catalogId) {
         reject("Missing catalog_id.")
         return
       }
@@ -108,8 +139,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         return
       }
 
-      const asset_type = this.getAssetType(type)
-      if (! asset_type) {
+      const assetType = this.getAssetType(type)
+      if (! assetType) {
         reject("Unable to determine asset_type.")
         return
       }
@@ -117,15 +148,15 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       Promise.all([
         this.getBearerToken(request),
         this.getLookerToken(request),
-      ]).then(([bearer_token, looker_token]) => {
+      ]).then(([bearerToken, lookerToken]) => {
         resolve({
           request,
           type,
-          asset_type,
-          bearer_token,
-          looker_token,
-          catalog_id,
-          render_check_attempts: 0,
+          assetType,
+          bearerToken,
+          lookerToken,
+          catalogId,
+          renderCheckAttempts: 0,
         })
       })
 
@@ -135,68 +166,72 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   private getRequestType(request: Hub.ActionRequest) {
     // for now using scheduledPlan.type
     // because request.type is always 'query'
-    const plan_type = (
+    const planType = (
       request.scheduledPlan
       && request.scheduledPlan.type
     )
 
-    switch (plan_type) {
-      case 'Look':
+    switch (planType) {
+      case "Look":
         return Hub.ActionType.Query
-      case 'Dashboard':
+      case "Dashboard":
         return Hub.ActionType.Dashboard
       default:
-        throw new Error('Unable to determine request type')
+        throw new Error("Unable to determine request type")
     }
   }
 
   private getAssetType(type: Hub.ActionType) {
     switch (type) {
       case Hub.ActionType.Query:
-        return 'Looker Query'
+        return "Looker Query"
       case Hub.ActionType.Dashboard:
-        return 'Looker Dashboard'
+        return "Looker Dashboard"
       default:
         return
     }
   }
 
-  async handleTransaction(transaction: Transaction) {
-    log('handleTransaction')
+  private async handleTransaction(transaction: Transaction) {
+    log("handleTransaction")
     this.debugRequest(transaction.request)
 
     /*
     Looks:
-    * Manually create asset of type looker_query via API (one time task) to replace looker_look
+    * Manually create asset of type looker_query via API (one time task) to
+      replace looker_look
     * For each Look triggered via an Action:
     * Create new asset of type looker_query
     * Put the Look's title into the asset's title
     * Put the Look's URL into the asset's description
-    * Iterate though each dimension in the fields.dimensions array (from Looker's json_detail blob) and create a tag on your Data Catalog asset with each dimension's label property
-    * Add the entirety of Looker's json_detail blob minus the data{} object (so, all the the metadata) to the Data Catalog asset's entity{} object.
+    * Iterate though each dimension in the fields.dimensions array (from
+      Looker's json_detail blob) and create a tag on your Data Catalog asset
+      with each dimension's label property
+    * Add the entirety of Looker's json_detail blob minus the data{} object (so,
+      all the the metadata) to the Data Catalog asset's entity{} object.
     *
     */
 
     // POST asset with metadata
-    const asset_id = await this.postAsset(transaction)
-    log('asset_id:', asset_id)
+    const assetId = await this.postAsset(transaction)
+    log("assetId:", assetId)
 
     // get bucket for this catalog - using first one for now
     const bucket = await this.getBucket(transaction)
-    log('bucket:', bucket)
+    log("bucket:", bucket)
 
     // get PNG from looker API
     const buffer = await this.getLookerPngBuffer(transaction)
-    log('typeof buffer:', typeof buffer)
-    log('fileType buffer:', fileType(buffer))
-    log('buffer.length:', buffer.length)
+    log("typeof buffer:", typeof buffer)
+    log("fileType buffer:", fileType(buffer))
+    log("buffer.length:", buffer.length)
 
     // upload PNG to IBM Cloud Object Storage (COS), get file_name
-    const file_name = await this.uploadPngToIbmCos(bucket, buffer, transaction)
-    log('file_name:', file_name)
+    const fileName = await this.uploadPngToIbmCos(bucket, buffer, transaction)
+    log("fileName:", fileName)
 
     // add attachment to the asset, pointing to PNG in COS
-    await this.postAttachmentToAsset(asset_id, bucket, file_name, transaction)
+    await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
 
     return new Promise<Hub.ActionResponse>((resolve) => {
       // TODO what response?
@@ -205,7 +240,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   }
 
-  async postAsset(transaction: Transaction) {
+  private async postAsset(transaction: Transaction) {
     switch (transaction.type) {
       case Hub.ActionType.Query:
         return this.postLookAsset(transaction)
@@ -213,62 +248,63 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         return this.postDashboardAsset(transaction)
       default:
         // should never happen
-        return Promise.reject('Unknown transaction type.')
+        return Promise.reject("Unknown transaction type.")
     }
   }
 
-  async postLookAsset(transaction: Transaction) {
-    log('postLookAsset')
+  private async postLookAsset(transaction: Transaction) {
+    log("postLookAsset")
 
     return new Promise<string>((resolve, reject) => {
-      const { request, asset_type } = transaction
+      const { request, assetType } = transaction
       const { attachment = {} } = request
       const { scheduledPlan = {} } = request
 
       const { dataJSON } = attachment
-      const { title, url } = scheduledPlan
 
       const tags = (
         dataJSON.fields.dimensions
         .map((dim: any) => dim.label_short)
       )
 
-      const entity_data = {
+      const entityData = {
         dataJSON,
         scheduledPlan,
       }
 
-      delete entity_data.dataJSON.data
+      delete entityData.dataJSON.data
 
       const options = {
-        method: 'POST',
-        uri: `${DATA_CATALOG_API}/assetsboo?catalog_id=${transaction.catalog_id}`,
+        method: "POST",
+        uri: `${DATA_CATALOG_API}/assetsboo?catalog_id=${transaction.catalogId}`,
         headers: {
-          'Authorization': `Bearer ${transaction.bearer_token}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${transaction.bearerToken}`,
+          Accept: "application/json",
         },
         json: true,
         body: {
           metadata: {
-            name: title,
-            description: url,
-            asset_type,
+            name: scheduledPlan.title,
+            description: scheduledPlan.url,
+            asset_type: assetType,
             tags,
-            origin_country: 'us',
-            rating: 0
+            origin_country: "us",
+            rating: 0,
           },
           entity: {
-            [asset_type]: entity_data,
-          }
-        }
+            [assetType]: entityData,
+          },
+        },
       }
 
       reqPromise(options)
-      .then(response => {
+      .then((response) => {
         try {
-          if (! response.asset_id) throw new Error('Response does not include access_token.')
+          if (! response.asset_id) {
+            throw new Error("Response does not include access_token.")
+          }
           resolve(response.asset_id)
-        } catch(err) {
+        } catch (err) {
           reject(err)
         }
       })
@@ -276,48 +312,48 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async postDashboardAsset(transaction: Transaction) {
-    log('postDashboardAsset')
+  private async postDashboardAsset(transaction: Transaction) {
+    log("postDashboardAsset")
 
     return new Promise<string>((resolve, reject) => {
-      const { request, asset_type } = transaction
+      const { request, assetType } = transaction
       const { scheduledPlan = {} } = request
 
-      const { title, url } = scheduledPlan
-
-      const entity_data = {
+      const entityData = {
         scheduledPlan,
       }
 
       const options = {
-        method: 'POST',
-        uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalog_id}`,
+        method: "POST",
+        uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
         headers: {
-          'Authorization': `Bearer ${transaction.bearer_token}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${transaction.bearerToken}`,
+          Accept: "application/json",
         },
         json: true,
         body: {
           metadata: {
-            name: title,
-            description: url,
-            asset_type,
+            name: scheduledPlan.title,
+            description: scheduledPlan.url,
+            asset_type: assetType,
             tags: [], // TODO
-            origin_country: 'us',
-            rating: 0
+            origin_country: "us",
+            rating: 0,
           },
           entity: {
-            [asset_type]: entity_data,
-          }
-        }
+            [assetType]: entityData,
+          },
+        },
       }
 
       reqPromise(options)
-      .then(response => {
+      .then((response) => {
         try {
-          if (! response.asset_id) throw new Error('Response does not include access_token.')
+          if (! response.asset_id) {
+            throw new Error("Response does not include access_token.")
+          }
           resolve(response.asset_id)
-        } catch(err) {
+        } catch (err) {
           reject(err)
         }
       })
@@ -325,26 +361,28 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async getBucket(transaction: Transaction) {
+  private async getBucket(transaction: Transaction) {
     return new Promise<any>((resolve, reject) => {
 
       const options = {
-        method: 'GET',
-        uri: `${DATA_CATALOG_API}/catalogs/${transaction.catalog_id}/asset_buckets`,
+        method: "GET",
+        uri: `${DATA_CATALOG_API}/catalogs/${transaction.catalogId}/asset_buckets`,
         headers: {
-          'Authorization': `Bearer ${transaction.bearer_token}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${transaction.bearerToken}`,
+          Accept: "application/json",
         },
         json: true,
       }
 
       reqPromise(options)
-      .then(response => {
+      .then((response) => {
         try {
           const bucket = response.resources[0]
-          if (! bucket) throw new Error('Response does not include resources.')
+          if (! bucket) {
+            throw new Error("Response does not include resources.")
+          }
           resolve(bucket)
-        } catch(err) {
+        } catch (err) {
           reject(err)
         }
       })
@@ -353,38 +391,38 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async getLookerPngBuffer(transaction: Transaction) {
-    log('getLookerPngBuffer')
+  private async getLookerPngBuffer(transaction: Transaction) {
+    log("getLookerPngBuffer")
 
-    const render_id = await this.startLookerRender(transaction)
-    log('render_id:', render_id)
+    const renderId = await this.startLookerRender(transaction)
+    log("renderId:", renderId)
 
-    const ready = await this.checkLookerRender(render_id, transaction)
-    log('ready:', ready)
+    const ready = await this.checkLookerRender(renderId, transaction)
+    log("ready:", ready)
 
-    const buffer = await this.downloadLookerRender(render_id, transaction)
+    const buffer = await this.downloadLookerRender(renderId, transaction)
 
     return buffer
   }
 
-  getLookerItemUrl(transaction: Transaction) {
-    const item_url = (
+  private getLookerItemUrl(transaction: Transaction) {
+    const itemUrl = (
       transaction.request.scheduledPlan
       && transaction.request.scheduledPlan.url
     )
-    if (! item_url) return
+    if (! itemUrl) { return }
 
-    const parsed_url = url.parse(item_url)
+    const parsedUrl = url.parse(itemUrl)
 
-    return parsed_url
+    return parsedUrl
   }
 
-  getLookerRenderUrl(transaction: Transaction) {
-    log('getLookerRenderUrl')
+  private getLookerRenderUrl(transaction: Transaction) {
+    log("getLookerRenderUrl")
     const { looker_api_url } = transaction.request.params
 
-    const item_url = this.getLookerItemUrl(transaction)
-    if (! item_url) return
+    const itemUrl = this.getLookerItemUrl(transaction)
+    if (! itemUrl) { return }
 
     const params = (
       transaction.type === Hub.ActionType.Query
@@ -392,42 +430,47 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       : DASHBOARD_RENDER_PARAMS
     )
 
-    const query = Object.keys(params).map(key => `${key}=${params[key]}`).join('&')
+    const query = (
+      Object.keys(params)
+      .map((key) => `${key}=${params[key]}`)
+      .join("&")
+    )
 
-    return `${looker_api_url}/render_tasks${item_url.pathname}/png?${query}`
+    return `${looker_api_url}/render_tasks${itemUrl.pathname}/png?${query}`
   }
 
-  async startLookerRender(transaction: Transaction) {
-    log('startLookerRender')
+  private async startLookerRender(transaction: Transaction) {
+    log("startLookerRender")
 
     return new Promise<string>((resolve, reject) => {
-      const render_url = this.getLookerRenderUrl(transaction)
-      log('render_url:', render_url)
-
-      if (! render_url) return reject('Unabled to get render_url.')
+      const renderUrl = this.getLookerRenderUrl(transaction)
+      if (! renderUrl) { return reject("Unabled to get render_url.") }
+      log("render_url:", renderUrl)
 
       const body: any = {}
       if (transaction.type === Hub.ActionType.Dashboard) {
-        body.dashboard_style = 'tiled'
+        body.dashboard_style = "tiled"
       }
 
       const options = {
-        method: 'POST',
-        uri: render_url,
+        method: "POST",
+        uri: renderUrl,
         headers: {
-          'Authorization': `token ${transaction.looker_token}`,
-          'Accept': 'application/json',
+          Authorization: `token ${transaction.lookerToken}`,
+          Accept: "application/json",
         },
         body,
-        json: true
+        json: true,
       }
 
       reqPromise(options)
-      .then(response => {
+      .then((response) => {
         try {
-          if (! response.id) throw new Error('Response does not include id.')
+          if (! response.id) {
+            throw new Error("Response does not include id.")
+          }
           resolve(response.id)
-        } catch(err) {
+        } catch (err) {
           reject(err)
         }
       })
@@ -435,36 +478,40 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async checkLookerRender(render_id: string, transaction: Transaction) {
+  private async checkLookerRender(renderId: string, transaction: Transaction) {
     return new Promise<boolean>((resolve, reject) => {
-      if (transaction.render_check_attempts > CHECK_RENDER_MAX_ATTEMPTS) {
-        return reject('Unable to check render status.')
+      if (transaction.renderCheckAttempts > CHECK_RENDER_MAX_ATTEMPTS) {
+        return reject("Unable to check render status.")
       }
 
-      transaction.render_check_attempts += 1
+      transaction.renderCheckAttempts += 1
 
       const { looker_api_url } = transaction.request.params
 
       const options = {
-        method: 'GET',
-        uri: `${looker_api_url}/render_tasks/${render_id}`,
+        method: "GET",
+        uri: `${looker_api_url}/render_tasks/${renderId}`,
         headers: {
-          'Authorization': `token ${transaction.looker_token}`,
-          'Accept': 'application/json',
+          Authorization: `token ${transaction.lookerToken}`,
+          Accept: "application/json",
         },
-        json: true
+        json: true,
       }
 
       setTimeout(() => {
-        log('checkLookerRender')
+        log("checkLookerRender")
         reqPromise(options)
-        .then(response => {
+        .then((response) => {
           try {
-            if (! response.status) throw new Error('Response does not include status.')
-            if (response.status === 'success') return resolve(true)
-            log('status:', response.status)
-            resolve(this.checkLookerRender(render_id, transaction))
-          } catch(err) {
+            if (! response.status) {
+              throw new Error("Response does not include status.")
+            }
+            if (response.status === "success") {
+              return resolve(true)
+            }
+            log("status:", response.status)
+            resolve(this.checkLookerRender(renderId, transaction))
+          } catch (err) {
             reject(err)
           }
         })
@@ -474,23 +521,24 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async downloadLookerRender(render_id: string, transaction: Transaction) {
+  private async downloadLookerRender(renderId: string, transaction: Transaction) {
     return new Promise<Buffer>((resolve, reject) => {
-      log('downloadLookerRender')
+      log("downloadLookerRender")
 
       const { looker_api_url } = transaction.request.params
 
       const options = {
-        method: 'GET',
-        uri: `${looker_api_url}/render_tasks/${render_id}/results`,
+        method: "GET",
+        uri: `${looker_api_url}/render_tasks/${renderId}/results`,
         headers: {
-          'Authorization': `token ${transaction.looker_token}`,
+          Authorization: `token ${transaction.lookerToken}`,
         },
         encoding: null,
       }
 
       req(options, (err, res, body) => {
-        if (err) return reject(err)
+        if (err) { return reject(err) }
+        log("res", typeof res)
         resolve(body)
       })
 
@@ -498,25 +546,25 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   }
 
-  async uploadPngToIbmCos(bucket: any, buffer: Buffer, transaction: Transaction) {
-    log('uploadPngToIbmCos')
+  private async uploadPngToIbmCos(bucket: any, buffer: Buffer, transaction: Transaction) {
+    log("uploadPngToIbmCos")
 
     const hash = await this.getHashForBuffer(buffer)
-    log('hash:', hash)
+    log("hash:", hash)
 
     return new Promise<string>((resolve, reject) => {
-      const file_name = this.getPngFilename(transaction)
-      log('file_name:', file_name)
+      const fileName = this.getPngFilename(transaction)
+      log("fileName:", fileName)
 
-      const file_url = `${COS_API}/${bucket.bucket_name}/${file_name}`
-      log('file_url:', file_url)
+      const fileUrl = `${COS_API}/${bucket.bucket_name}/${fileName}`
+      log("fileUrl:", fileUrl)
 
       const options = {
-        method: 'PUT',
-        uri: `${file_url}?x-amz-content-sha256=${hash}`,
+        method: "PUT",
+        uri: `${fileUrl}?x-amz-content-sha256=${hash}`,
         headers: {
-          'Authorization': `Bearer ${transaction.bearer_token}`,
-          'Content-Type': 'image/png',
+          "Authorization": `Bearer ${transaction.bearerToken}`,
+          "Content-Type": "image/png",
         },
       }
 
@@ -527,45 +575,46 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       // PUT the buffer to the attachment_upload_url
       bufferStream.pipe(
         req(options)
-        .on('response', () => {
-          resolve(file_name)
+        .on("response", () => {
+          resolve(fileName)
         })
-        .on('error', (err) => {
-          log('err', err)
+        .on("error", (err) => {
+          log("err", err)
           reject(err)
-        })
+        }),
       )
 
     })
   }
 
-  getPngFilename(transaction: Transaction) {
-    const item_url = this.getLookerItemUrl(transaction)
-    if (! item_url) return
+  private getPngFilename(transaction: Transaction) {
+    const itemUrl = this.getLookerItemUrl(transaction)
+    if (! itemUrl) { return }
+    if (! itemUrl.pathname) { return }
 
-    const file_name = (
-      item_url.pathname
-      .split('/')
-      .filter(param => !! param)
-      .join('_')
+    const fileName = (
+      itemUrl.pathname
+      .split("/")
+      .filter((param) => !! param)
+      .join("_")
     )
 
-    return `${file_name}_${Date.now()}.png`
+    return `${fileName}_${Date.now()}.png`
   }
 
-  async getHashForBuffer(buffer: Buffer) {
+  private async getHashForBuffer(buffer: Buffer) {
     return new Promise<string>((resolve, reject) => {
-      const hash = crypto.createHash('sha256')
+      const hash = crypto.createHash("sha256")
 
       const timer = setTimeout(() => {
-        reject('unable to create hash')
+        reject("unable to create hash")
       }, 10000)
 
-      hash.on('readable', () => {
+      hash.on("readable", () => {
         const data = hash.read()
-        if (data) {
+        if (data instanceof Buffer) {
           clearTimeout(timer)
-          resolve(data.toString('hex'))
+          resolve(data.toString("hex"))
         }
       })
 
@@ -574,42 +623,43 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async postAttachmentToAsset(asset_id: string, bucket: any, file_name: string, transaction: Transaction) {
-    log('postAttachmentToAsset')
-    const { asset_type } = transaction
-    const connection_id = bucket.bluemix_cos_connection.editor.bucket_connection_id
-    const connection_path = `${bucket.bucket_name}/${file_name}`
+  private async postAttachmentToAsset(assetId: string, bucket: any, fileName: string, transaction: Transaction) {
+    log("postAttachmentToAsset")
+    const { assetType } = transaction
+    const connectionId = bucket.bluemix_cos_connection.editor.bucket_connection_id
+    const connectionPath = `${bucket.bucket_name}/${fileName}`
 
     const options = {
-      method: 'POST',
-      uri: `${DATA_CATALOG_API}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
+      method: "POST",
+      uri: `${DATA_CATALOG_API}/assets/${assetId}/attachments?catalog_id=${transaction.catalogId}`,
       headers: {
-        'Authorization': `Bearer ${transaction.bearer_token}`,
-        'Accept': 'application/json',
+        Authorization: `Bearer ${transaction.bearerToken}`,
+        Accept: "application/json",
       },
       json: true,
       body: {
-        asset_type,
-        connection_id,
-        connection_path,
-      }
+        asset_type: assetType,
+        connection_id: connectionId,
+        connection_path: connectionPath,
+      },
     }
 
     return reqPromise(options)
   }
 
+  /*
   async old_postAttachmentToAsset(asset_id: string, png_path: string, transaction: Transaction) {
-    log('postAttachmentToAsset')
-    log('png_path:', png_path)
+    log("postAttachmentToAsset")
+    log("png_path:", png_path)
 
     return new Promise<any>((resolve, reject) => {
 
       const options = {
-        method: 'POST',
+        method: "POST",
         uri: `${DATA_CATALOG_API}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
         headers: {
-          'Authorization': `Bearer ${transaction.bearer_token}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${transaction.bearer_token}`,
+          Accept: 'application/json',
         },
         json: true,
         body: {
@@ -628,21 +678,23 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           const attachment_id = response.attachment_id
           const attachment_upload_url = response.url1
           if (! attachment_id) throw new Error('Response does not include attachment_id.')
-          if (! attachment_upload_url) throw new Error('Response does not include url1.')
+          if (! attachment_upload_url) throw new Error("Response does not include url1.")
           resolve({
             attachment_id,
             attachment_upload_url,
           })
-        } catch(err) {
+        } catch (err) {
           reject(err)
         }
       })
       .catch(reject)
     })
   }
+  */
 
+  /*
   async old_uploadAttachment(attachment_upload_url: string, transaction: Transaction) {
-    log('uploadAttachment')
+    log("uploadAttachment")
 
     return new Promise<any>((resolve, reject) => {
 
@@ -663,29 +715,32 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       bufferStream.pipe(
         req.put(attachment_upload_url)
         .on('response', (res) => {
-          log('res', res)
+          log("res", res)
           resolve(res)
         })
         .on('error', (err) => {
-          log('err', err)
+          log("err", err)
           reject(err)
         })
       )
 
     })
   }
+  */
 
+  /*
   async old_postAttachmentComplete(asset_id: string, attachment_id: string, transaction: Transaction) {
-    log('postAssetAttachmentComplete')
+    log("postAssetAttachmentComplete")
 
     return new Promise<any>((resolve, reject) => {
 
       const options = {
-        method: 'POST',
-        uri: `${DATA_CATALOG_API}/assets/${asset_id}/attachments/${attachment_id}/complete?catalog_id=${transaction.catalog_id}`,
+        method: "POST",
+        uri: `${DATA_CATALOG_API}/assets/${asset_id}/attachments/${attachment_id}/
+        complete?catalog_id=${transaction.catalog_id}`,
         headers: {
-          'Authorization': `Bearer ${transaction.bearer_token}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${transaction.bearer_token}`,
+          Accept: 'application/json',
         },
         json: true,
       }
@@ -693,133 +748,56 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       reqPromise(options)
       .then(response => {
         try {
-          log('response', response)
+          log("response", response)
           resolve(response)
-        } catch(err) {
+        } catch (err) {
           reject(err)
         }
       })
       .catch(reject)
     })
   }
+  */
 
-  async handleDashboardTransaction(transaction: Transaction) {
-    log('handleDashboardTransaction')
-    // const bearer_token = await this.getBearerToken(request)
-    this.debugRequest(transaction.request)
-
-    return new Promise<Hub.ActionResponse>((resolve) => {
-      resolve(new Hub.ActionResponse())
-    })
-  }
-
-  async debugRequest(request: Hub.ActionRequest) {
-    const request_info = Object.assign({}, request)
-    request_info.attachment = Object.assign({}, request.attachment)
-    delete request_info.attachment.dataBuffer
-    log('-'.repeat(40))
-    log(JSON.stringify(request_info, null, 2))
-    log('-'.repeat(40))
-
-      // const buffer = request.attachment && request.attachment.dataBuffer
-      // if (! buffer) {
-      //   reject("Couldn't get data from attachment.")
-      //   return
-      // }
-
-      // const catalog = request.formParams && request.formParams.catalog
-      // if (! catalog) {
-      //   reject("Missing catalog.")
-      //   return
-      // }
-
-      // let response
-      // try {
-      //   log('buffer.toString()', buffer.toString())
-      //   const json = JSON.parse(buffer.toString())
-      //   delete json.data
-      //   console.log('json', json)
-      // } catch (err) {
-      //   response = { success: false, message: err.message }
-      // }
-      // resolve(new Hub.ActionResponse(response))
-
-      // const options = {
-      //   file: {
-      //     value: request.attachment.dataBuffer,
-      //     options: {
-      //       filename: fileName,
-      //     },
-      //   },
-      //   channels: request.formParams.channel,
-      //   filetype: request.attachment.fileExtension,
-      //   initial_comment: request.formParams.initial_comment,
-      // }
-
-      // let response
-      // slack.files.upload(fileName, options, (err: any) => {
-      //   if (err) {
-      //     response = { success: true, message: err.message }
-      //   }
-      // })
-      // resolve(new Hub.ActionResponse(response))
-  }
-
-  async form(request: Hub.ActionRequest) {
-    this.debugRequest(request)
-
-    const form = new Hub.ActionForm()
-    const catalogs = await this.getCatalogs(request)
-
-    form.fields = [
-      {
-        description: 'Name of the catalog to send to',
-        label: 'Send to',
-        name: 'catalog_id',
-        options: catalogs.map((catalog) => {
-          return {
-            name: catalog.guid,
-            label: catalog.label,
-          }
-        }),
-        required: true,
-        type: 'select',
-      },
-    ]
-
-    return form
+  private async debugRequest(request: Hub.ActionRequest) {
+    const requestInfo = Object.assign({}, request)
+    requestInfo.attachment = Object.assign({}, request.attachment)
+    delete requestInfo.attachment.dataBuffer
+    log("-".repeat(40))
+    log(JSON.stringify(requestInfo, null, 2))
+    log("-".repeat(40))
   }
 
   private async getBearerToken(request: Hub.ActionRequest) {
     // obtain a bearer token using an IBM Cloud API Key
 
-    // curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&response_type=cloud_iam&apikey=ps2q46n3fjEYFhGefwHla2pCZBR1BHTWpCPxjVHBlfzb" "https://iam.ng.bluemix.net/identity/token"
-
     const data = {
-      grant_type: 'urn:ibm:params:oauth:grant-type:apikey',
-      response_type: 'cloud_iam',
+      grant_type: "urn:ibm:params:oauth:grant-type:apikey",
+      response_type: "cloud_iam",
       apikey: request.params.ibm_cloud_api_key,
     }
 
     const options = {
-      method: 'POST',
+      method: "POST",
       uri: BEARER_TOKEN_API,
       form: data,
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
       },
-      json: true
+      json: true,
     }
 
     return new Promise<string>((resolve, reject) => {
       reqPromise(options)
-      .then(response => {
+      .then((response) => {
         try {
-          if (! response.access_token) throw new Error('Response does not include access_token.')
-          log('bearer_token received')
+          if (! response.access_token) {
+            throw new Error("Response does not include access_token.")
+          }
+          log("bearer_token received")
           resolve(response.access_token)
-        } catch(err) {
+        } catch (err) {
           reject(err)
         }
       })
@@ -837,22 +815,24 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     } = request.params
 
     const options = {
-      method: 'POST',
+      method: "POST",
       uri: `${looker_api_url}/login?client_id=${looker_api_client_id}&client_secret=${looker_api_client_secret}`,
       headers: {
-        'Accept': 'application/json',
+        Accept: "application/json",
       },
-      json: true
+      json: true,
     }
 
     return new Promise<string>((resolve, reject) => {
       reqPromise(options)
-      .then(response => {
+      .then((response) => {
         try {
-          if (! response.access_token) throw new Error('Response does not include access_token.')
-          log('looker_token received')
+          if (! response.access_token) {
+            throw new Error("Response does not include access_token.")
+          }
+          log("looker_token received")
           resolve(response.access_token)
-        } catch(err) {
+        } catch (err) {
           reject(err)
         }
       })
@@ -860,24 +840,24 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     })
   }
 
-  async getCatalogs(request: Hub.ActionRequest) {
-    const bearer_token = await this.getBearerToken(request)
+  private async getCatalogs(request: Hub.ActionRequest) {
+    const bearerToken = await this.getBearerToken(request)
 
     return new Promise<Catalog[]>((resolve, reject) => {
 
       const options = {
-        method: 'GET',
+        method: "GET",
         uri: `${DATA_CATALOG_API}/catalogs?limit=25`,
         headers: {
-          'Authorization': 'Bearer ' + bearer_token,
-          'Accept': 'application/json',
-          'X-OpenID-Connect-ID-Token': 'Bearer',
+          "Authorization": `Bearer ${bearerToken}`,
+          "Accept": "application/json",
+          "X-OpenID-Connect-ID-Token": "Bearer",
         },
-        json: true
+        json: true,
       }
 
       reqPromise(options)
-      .then(response => {
+      .then((response) => {
         try {
           const catalogs: Catalog[] = response.catalogs.map((catalog: any) => {
             return {
