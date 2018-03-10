@@ -142,22 +142,22 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const assetId = await this.postAsset(transaction)
     log("assetId:", assetId)
 
-    // // get bucket for this catalog - using first one for now
-    // const bucket = await this.getBucket(transaction)
-    // log("bucket:", bucket)
+    // get bucket for this catalog - using first one for now
+    const bucket = await this.getBucket(transaction)
+    log("bucket:", bucket)
 
-    // // get PNG from looker API
-    // const buffer = await this.getLookerPngBuffer(transaction)
-    // log("typeof buffer:", typeof buffer)
-    // log("fileType buffer:", fileType(buffer))
-    // log("buffer.length:", buffer.length)
+    // get PNG from looker API
+    const buffer = await this.getLookerPngBuffer(transaction)
+    log("typeof buffer:", typeof buffer)
+    log("fileType buffer:", fileType(buffer))
+    log("buffer.length:", buffer.length)
 
-    // // upload PNG to IBM Cloud Object Storage (COS), get file_name
-    // const fileName = await this.uploadPngToIbmCos(bucket, buffer, transaction)
-    // log("fileName:", fileName)
+    // upload PNG to IBM Cloud Object Storage (COS), get file_name
+    const fileName = await this.uploadPngToIbmCos(bucket, buffer, transaction)
+    log("fileName:", fileName)
 
-    // // add attachment to the asset, pointing to PNG in COS
-    // await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
+    // add attachment to the asset, pointing to PNG in COS
+    await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
 
     return new Promise<Hub.ActionResponse>((resolve) => {
       // TODO what response?
