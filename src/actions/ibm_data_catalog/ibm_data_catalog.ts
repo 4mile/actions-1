@@ -115,11 +115,55 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async execute(request: Hub.ActionRequest) {
+    log("execute")
+    this.debugRequest(request)
+
     log("request.type", request.type)
     const transaction = await this.getTransactionFromRequest(request)
     log("determined type", transaction.type)
 
-    return this.handleTransaction(transaction)
+    /*
+    Looks:
+    * Manually create asset of type looker_query via API (one time task) to
+      replace looker_look
+    * For each Look triggered via an Action:
+    * Create new asset of type looker_query
+    * Put the Look's title into the asset's title
+    * Put the Look's URL into the asset's description
+    * Iterate though each dimension in the fields.dimensions array (from
+      Looker's json_detail blob) and create a tag on your Data Catalog asset
+      with each dimension's label property
+    * Add the entirety of Looker's json_detail blob minus the data{} object (so,
+      all the the metadata) to the Data Catalog asset's entity{} object.
+    *
+    */
+
+    // POST asset with metadata
+    const assetId = await this.postAsset(transaction)
+    log("assetId:", assetId)
+
+    // // get bucket for this catalog - using first one for now
+    // const bucket = await this.getBucket(transaction)
+    // log("bucket:", bucket)
+
+    // // get PNG from looker API
+    // const buffer = await this.getLookerPngBuffer(transaction)
+    // log("typeof buffer:", typeof buffer)
+    // log("fileType buffer:", fileType(buffer))
+    // log("buffer.length:", buffer.length)
+
+    // // upload PNG to IBM Cloud Object Storage (COS), get file_name
+    // const fileName = await this.uploadPngToIbmCos(bucket, buffer, transaction)
+    // log("fileName:", fileName)
+
+    // // add attachment to the asset, pointing to PNG in COS
+    // await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
+
+    return new Promise<Hub.ActionResponse>((resolve) => {
+      // TODO what response?
+      resolve(new Hub.ActionResponse())
+    })
+
   }
 
   private async getTransactionFromRequest(request: Hub.ActionRequest) {
@@ -188,54 +232,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       default:
         return
     }
-  }
-
-  private async handleTransaction(transaction: Transaction) {
-    log("handleTransaction")
-    this.debugRequest(transaction.request)
-
-    /*
-    Looks:
-    * Manually create asset of type looker_query via API (one time task) to
-      replace looker_look
-    * For each Look triggered via an Action:
-    * Create new asset of type looker_query
-    * Put the Look's title into the asset's title
-    * Put the Look's URL into the asset's description
-    * Iterate though each dimension in the fields.dimensions array (from
-      Looker's json_detail blob) and create a tag on your Data Catalog asset
-      with each dimension's label property
-    * Add the entirety of Looker's json_detail blob minus the data{} object (so,
-      all the the metadata) to the Data Catalog asset's entity{} object.
-    *
-    */
-
-    // POST asset with metadata
-    const assetId = await this.postAsset(transaction)
-    log("assetId:", assetId)
-
-    // get bucket for this catalog - using first one for now
-    const bucket = await this.getBucket(transaction)
-    log("bucket:", bucket)
-
-    // get PNG from looker API
-    const buffer = await this.getLookerPngBuffer(transaction)
-    log("typeof buffer:", typeof buffer)
-    log("fileType buffer:", fileType(buffer))
-    log("buffer.length:", buffer.length)
-
-    // upload PNG to IBM Cloud Object Storage (COS), get file_name
-    const fileName = await this.uploadPngToIbmCos(bucket, buffer, transaction)
-    log("fileName:", fileName)
-
-    // add attachment to the asset, pointing to PNG in COS
-    await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
-
-    return new Promise<Hub.ActionResponse>((resolve) => {
-      // TODO what response?
-      resolve(new Hub.ActionResponse())
-    })
-
   }
 
   private async postAsset(transaction: Transaction) {
