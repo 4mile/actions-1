@@ -4,8 +4,6 @@ import * as reqPromise from "request-promise-native"
 import * as stream from "stream"
 import * as url from "url"
 import * as Hub from "../../hub"
-// import * as fs from 'fs'
-// const isMime = require('is-mime')
 const fileType = require("file-type")
 
 const BEARER_TOKEN_API = "https://iam.ng.bluemix.net/identity/token"

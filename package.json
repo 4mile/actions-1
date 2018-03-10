@@ -56,7 +56,6 @@
     "express-winston": "^2.4.0",
     "file-type": "^7.6.0",
     "hipchatter": "^1.0.0",
-    "is-mime": "^0.3.0",
     "jira-client": "^6.4.0",
     "nodemon": "^1.12.1",
     "querystringify": "^1.0.0",

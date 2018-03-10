@@ -4,7 +4,7 @@ function log() {
 
 // hash test
 // const crypto = require('crypto')
-const fs = require('fs')
+// const fs = require('fs')
 
 // const file = fs.readFileSync('./download.png')
 
