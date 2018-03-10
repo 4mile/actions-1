@@ -171,7 +171,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const { catalogId } = request.formParams
       if (! catalogId) {
-        reject("Missing catalog_id.")
+        reject("Missing catalogId.")
         return
       }
 
@@ -270,7 +270,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const options = {
         method: "POST",
-        uri: `${DATA_CATALOG_API}/assetsboo?catalog_id=${transaction.catalogId}`,
+        uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
         headers: {
           Authorization: `Bearer ${transaction.bearerToken}`,
           Accept: "application/json",
