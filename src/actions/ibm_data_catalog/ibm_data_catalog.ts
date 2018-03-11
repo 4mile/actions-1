@@ -376,27 +376,21 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
   }
 
-  async getTags(entityData: any) {
-    return new Promise<string[]>((resolve, reject) => {
-      try {
-        const { measures, dimensions } = entityData.dataJSON.fields
-        const fields = measures.concat(dimensions)
+  getTags(entityData: any) {
+      const { measures, dimensions } = entityData.dataJSON.fields
+      const fields = measures.concat(dimensions)
 
-        // using a Set to ensure unique tags
-        const set = new Set()
-        const keys = ["label_short", "view_label"]
+      // using a Set to ensure unique tags
+      const set = new Set()
+      const keys = ["label_short", "view_label"]
 
-        fields.forEach((field: any) => {
-          keys.forEach((key) => {
-            if (field[key]) { set.add(field[key]) }
-          })
+      fields.forEach((field: any) => {
+        keys.forEach((key) => {
+          if (field[key]) { set.add(field[key]) }
         })
+      })
 
-        resolve([...set])
-      } catch (err) {
-        reject(err)
-      }
-    })
+      return [...set].sort()
   }
 
   async postDashboardAsset(transaction: Transaction) {
