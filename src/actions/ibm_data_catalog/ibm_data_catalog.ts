@@ -320,6 +320,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             asset_type: assetType,
             name: entityData.scheduledPlan.title,
             description: entityData.scheduledPlan.url,
+            origin_country: "us",
             tags,
           },
           entity: {
