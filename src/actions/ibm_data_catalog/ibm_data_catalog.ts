@@ -319,7 +319,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
           metadata: {
             asset_type: assetType,
             name: entityData.scheduledPlan.title,
-            description: entityData.scheduledPlan.url,
+            description: `Open in Looker: ${entityData.scheduledPlan.url}`,
             origin_country: "us",
             tags,
           },
@@ -415,12 +415,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         json: true,
         body: {
           metadata: {
-            name: scheduledPlan.title,
-            description: scheduledPlan.url,
             asset_type: assetType,
-            tags: [], // TODO
+            name: scheduledPlan.title,
+            description: `Open in Looker: ${entityData.scheduledPlan.url}`,
             origin_country: "us",
-            rating: 0,
+            tags: [], // TODO
           },
           entity: {
             [assetType]: entityData,
