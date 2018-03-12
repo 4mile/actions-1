@@ -148,9 +148,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     // get PNG from looker API
     const buffer = await this.getLookerPngBuffer(transaction)
-    log("typeof buffer:", typeof buffer)
-    log("fileType buffer:", fileType(buffer))
-    log("buffer.length:", buffer.length)
+    if (! (buffer instanceof Buffer)) {
+      throw new Error("Unable to get PNG from Looker API.")
+    }
+    log("buffer file type:", fileType(buffer))
+    log("buffer length:", buffer.length)
 
     // upload PNG to IBM Cloud Object Storage (COS), get file_name
     const fileName = await this.uploadPngToIbmCos(bucket, buffer, transaction)
@@ -159,6 +161,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     // add attachment to the asset, pointing to PNG in COS
     await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
 
+    // TODO any response other than this?
     return new Hub.ActionResponse()
   }
 
