@@ -374,7 +374,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const set = new Set()
 
     try {
-      entityData.dashboard_elements.forEach((element: any) => {
+      entityData.dataJSON.dashboard_elements.forEach((element: any) => {
         // add title as a tag
         if (element.title) {
           set.add(element.title)

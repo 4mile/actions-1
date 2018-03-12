@@ -80,5 +80,17 @@ function log(...args: any[]) {
 // log(nname.replace(disallowedNameRe, ''))
 
 // ========
-import * as changeCase from "change-case"
-log(changeCase.titleCase('a_snake'))
+// import * as changeCase from "change-case"
+// log(changeCase.titleCase('a_snake'))
+
+
+// ========
+import * as Hub from "../../hub"
+import { IbmDataCatalogAssetAction, Transaction } from "./ibm_data_catalog"
+const entityData = require("./dashboard_api_response.json")
+
+// log('IbmDataCatalogAssetAction', IbmDataCatalogAssetAction)
+const action = new IbmDataCatalogAssetAction()
+
+const tags = action.getDashboardTags(entityData)
+log('tags', tags)
