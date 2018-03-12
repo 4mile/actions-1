@@ -466,7 +466,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async downloadLookerRender(renderId: string, transaction: Transaction) {
-    return new Promise<Buffer>((resolve, reject) => {
       log("downloadLookerRender")
 
       const { looker_api_url } = transaction.request.params
@@ -480,14 +479,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         encoding: null,
       }
 
-      req(options, (err, res, body) => {
-        if (err) { return reject(err) }
-        log("res", typeof res)
-        log("res.body", typeof res.body)
-        log("res.body === body", res.body === body)
-        resolve(body)
-      })
-    })
+      const response = await reqPromise(options)
+
+      return response.body
   }
 
   async uploadPngToIbmCos(bucket: any, buffer: Buffer, transaction: Transaction) {
@@ -496,23 +490,23 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const hash = await this.getHashForBuffer(buffer)
     log("hash:", hash)
 
+    const fileName = this.getPngFilename(transaction)
+    log("fileName:", fileName)
+
+    const fileUrl = `${IBM_CLOUD_OBJECT_STORAGE_API}/${bucket.bucket_name}/${fileName}`
+    log("fileUrl:", fileUrl)
+
+    const options = {
+      method: "PUT",
+      uri: `${fileUrl}?x-amz-content-sha256=${hash}`,
+      headers: {
+        "Authorization": `Bearer ${transaction.bearerToken}`,
+        "Content-Type": "image/png",
+        "Content-Length": buffer.length,
+      },
+    }
+
     return new Promise<string>((resolve, reject) => {
-      const fileName = this.getPngFilename(transaction)
-      log("fileName:", fileName)
-
-      const fileUrl = `${IBM_CLOUD_OBJECT_STORAGE_API}/${bucket.bucket_name}/${fileName}`
-      log("fileUrl:", fileUrl)
-
-      const options = {
-        method: "PUT",
-        uri: `${fileUrl}?x-amz-content-sha256=${hash}`,
-        headers: {
-          "Authorization": `Bearer ${transaction.bearerToken}`,
-          "Content-Type": "image/png",
-          "Content-Length": buffer.length,
-        },
-      }
-
       // create a stream from our buffer
       const bufferStream = new stream.PassThrough()
       bufferStream.end(buffer)
@@ -528,7 +522,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             reject(err)
           }),
       )
-
     })
   }
 
