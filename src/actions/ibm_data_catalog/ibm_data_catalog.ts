@@ -241,6 +241,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const tags = this.getTags(entityData)
     log("tags", tags)
 
+    // IBM DataCatalog error:
+    // Please use only letters, numbers, underscore, dash, space, period for 'name'
+    const disallowedNameRegex = /[^a-z0-9_\- \.]/gi
+
     const options = {
       method: "POST",
       uri: `${IBM_DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
@@ -252,7 +256,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       body: {
         metadata: {
           asset_type: assetType,
-          name: entityData.scheduledPlan.title,
+          name: entityData.scheduledPlan.title.replace(disallowedNameRegex, ""),
           description: `Open in Looker: ${entityData.scheduledPlan.url}`,
           origin_country: "us",
           tags,
