@@ -6,9 +6,9 @@ import * as url from "url"
 import * as Hub from "../../hub"
 const fileType = require("file-type")
 
-const BEARER_TOKEN_API = "https://iam.ng.bluemix.net/identity/token"
-const DATA_CATALOG_API = "https://catalogs-yp-prod.mybluemix.net:443/v2"
-const COS_API = "https://s3-api.us-geo.objectstorage.softlayer.net"
+const IBM_BEARER_TOKEN_API = "https://iam.ng.bluemix.net/identity/token"
+const IBM_DATA_CATALOG_API = "https://catalogs-yp-prod.mybluemix.net:443/v2"
+const IBM_CLOUD_OBJECT_STORAGE_API = "https://s3-api.us-geo.objectstorage.softlayer.net"
 const CHECK_RENDER_MAX_ATTEMPTS = 100
 const CHECK_RENDER_INTERVAL = 5000
 
@@ -262,7 +262,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const options = {
       method: "POST",
-      uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
+      uri: `${IBM_DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
       headers: {
         Authorization: `Bearer ${transaction.bearerToken}`,
         Accept: "application/json",
@@ -299,7 +299,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const options = {
       method: "POST",
-      uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
+      uri: `${IBM_DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
       headers: {
         Authorization: `Bearer ${transaction.bearerToken}`,
         Accept: "application/json",
@@ -436,7 +436,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async getBucket(transaction: Transaction) {
     const options = {
       method: "GET",
-      uri: `${DATA_CATALOG_API}/catalogs/${transaction.catalogId}/asset_buckets`,
+      uri: `${IBM_DATA_CATALOG_API}/catalogs/${transaction.catalogId}/asset_buckets`,
       headers: {
         Authorization: `Bearer ${transaction.bearerToken}`,
         Accept: "application/json",
@@ -618,7 +618,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       const fileName = this.getPngFilename(transaction)
       log("fileName:", fileName)
 
-      const fileUrl = `${COS_API}/${bucket.bucket_name}/${fileName}`
+      const fileUrl = `${IBM_CLOUD_OBJECT_STORAGE_API}/${bucket.bucket_name}/${fileName}`
       log("fileUrl:", fileUrl)
 
       const options = {
@@ -627,6 +627,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         headers: {
           "Authorization": `Bearer ${transaction.bearerToken}`,
           "Content-Type": "image/png",
+          "Content-Length": buffer.length,
         },
       }
 
@@ -693,7 +694,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const options = {
       method: "POST",
-      uri: `${DATA_CATALOG_API}/assets/${assetId}/attachments?catalog_id=${transaction.catalogId}`,
+      uri: `${IBM_DATA_CATALOG_API}/assets/${assetId}/attachments?catalog_id=${transaction.catalogId}`,
       headers: {
         Authorization: `Bearer ${transaction.bearerToken}`,
         Accept: "application/json",
@@ -709,119 +710,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return reqPromise(options)
   }
 
-  /*
-  async old_postAttachmentToAsset(asset_id: string, png_path: string, transaction: Transaction) {
-    log("postAttachmentToAsset")
-    log("png_path:", png_path)
-
-    return new Promise<any>((resolve, reject) => {
-
-      const options = {
-        method: "POST",
-        uri: `${DATA_CATALOG_API}/assets/${asset_id}/attachments?catalog_id=${transaction.catalog_id}`,
-        headers: {
-          Authorization: `Bearer ${transaction.bearer_token}`,
-          Accept: 'application/json',
-        },
-        json: true,
-        body: {
-          asset_type: 'data_asset',
-          name: 'Looker Look Attachment',
-          description: 'CSV attachment',
-          mime: 'text/csv',
-          data_partitions: 1,
-          private_url: true
-        }
-      }
-
-      reqPromise(options)
-      .then(response => {
-        try {
-          const attachment_id = response.attachment_id
-          const attachment_upload_url = response.url1
-          if (! attachment_id) throw new Error('Response does not include attachment_id.')
-          if (! attachment_upload_url) throw new Error("Response does not include url1.")
-          resolve({
-            attachment_id,
-            attachment_upload_url,
-          })
-        } catch (err) {
-          reject(err)
-        }
-      })
-      .catch(reject)
-    })
-  }
-  */
-
-  /*
-  async old_uploadAttachment(attachment_upload_url: string, transaction: Transaction) {
-    log("uploadAttachment")
-
-    return new Promise<any>((resolve, reject) => {
-
-      const buffer = (
-        transaction.request.attachment
-        && transaction.request.attachment.dataBuffer
-      )
-      if (! buffer) {
-        reject("Couldn't get data from attachment.")
-        return
-      }
-
-      // create a stream from our buffer
-      const bufferStream = new stream.PassThrough()
-      bufferStream.end(buffer)
-
-      // PUT the buffer to the attachment_upload_url
-      bufferStream.pipe(
-        req.put(attachment_upload_url)
-        .on('response', (res) => {
-          log("res", res)
-          resolve(res)
-        })
-        .on('error', (err) => {
-          log("err", err)
-          reject(err)
-        })
-      )
-
-    })
-  }
-  */
-
-  /*
-  async old_postAttachmentComplete(asset_id: string, attachment_id: string, transaction: Transaction) {
-    log("postAssetAttachmentComplete")
-
-    return new Promise<any>((resolve, reject) => {
-
-      const options = {
-        method: "POST",
-        uri: `${DATA_CATALOG_API}/assets/${asset_id}/attachments/${attachment_id}/
-        complete?catalog_id=${transaction.catalog_id}`,
-        headers: {
-          Authorization: `Bearer ${transaction.bearer_token}`,
-          Accept: 'application/json',
-        },
-        json: true,
-      }
-
-      reqPromise(options)
-      .then(response => {
-        try {
-          log("response", response)
-          resolve(response)
-        } catch (err) {
-          reject(err)
-        }
-      })
-      .catch(reject)
-    })
-  }
-  */
-
-  async debugRequest(request: Hub.ActionRequest) {
+  debugRequest(request: Hub.ActionRequest) {
     const requestInfo = Object.assign({}, request)
     requestInfo.attachment = Object.assign({}, request.attachment)
     delete requestInfo.attachment.dataBuffer
@@ -833,15 +722,17 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async getBearerToken(request: Hub.ActionRequest) {
     // obtain a bearer token using an IBM Cloud API Key
 
+    const {ibm_cloud_api_key} = request.params
+
     const data = {
       grant_type: "urn:ibm:params:oauth:grant-type:apikey",
       response_type: "cloud_iam",
-      apikey: request.params.ibm_cloud_api_key,
+      apikey: ibm_cloud_api_key,
     }
 
     const options = {
       method: "POST",
-      uri: BEARER_TOKEN_API,
+      uri: IBM_BEARER_TOKEN_API,
       form: data,
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -850,21 +741,14 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       json: true,
     }
 
-    return new Promise<string>((resolve, reject) => {
-      reqPromise(options)
-        .then((response) => {
-          try {
-            if (!response.access_token) {
-              throw new Error("Response does not include access_token.")
-            }
-            log("bearer_token received")
-            resolve(response.access_token)
-          } catch (err) {
-            reject(err)
-          }
-        })
-        .catch(reject)
-    })
+    const response = await reqPromise(options)
+
+    if (!response.access_token) {
+      throw new Error("Response does not include access_token.")
+    }
+
+    log("bearer_token received")
+    return response.access_token
   }
 
   async getLookerToken(request: Hub.ActionRequest) {
@@ -885,56 +769,39 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       json: true,
     }
 
-    return new Promise<string>((resolve, reject) => {
-      reqPromise(options)
-        .then((response) => {
-          try {
-            if (!response.access_token) {
-              throw new Error("Response does not include access_token.")
-            }
-            log("looker_token received")
-            resolve(response.access_token)
-          } catch (err) {
-            reject(err)
-          }
-        })
-        .catch(reject)
-    })
+    const response = await reqPromise(options)
+
+    if (!response.access_token) {
+      throw new Error("Response does not include access_token.")
+    }
+
+    return response.access_token
   }
 
   async getCatalogs(request: Hub.ActionRequest) {
     const bearerToken = await this.getBearerToken(request)
 
-    return new Promise<Catalog[]>((resolve, reject) => {
+    const options = {
+      method: "GET",
+      uri: `${IBM_DATA_CATALOG_API}/catalogs?limit=25`,
+      headers: {
+        "Authorization": `Bearer ${bearerToken}`,
+        "Accept": "application/json",
+        "X-OpenID-Connect-ID-Token": "Bearer",
+      },
+      json: true,
+    }
 
-      const options = {
-        method: "GET",
-        uri: `${DATA_CATALOG_API}/catalogs?limit=25`,
-        headers: {
-          "Authorization": `Bearer ${bearerToken}`,
-          "Accept": "application/json",
-          "X-OpenID-Connect-ID-Token": "Bearer",
-        },
-        json: true,
+    const response = await reqPromise(options)
+
+    const catalogs: Catalog[] = response.catalogs.map((catalog: any) => {
+      return {
+        guid: catalog.metadata.guid,
+        label: catalog.entity.name,
       }
-
-      reqPromise(options)
-        .then((response) => {
-          try {
-            const catalogs: Catalog[] = response.catalogs.map((catalog: any) => {
-              return {
-                guid: catalog.metadata.guid,
-                label: catalog.entity.name,
-              }
-            })
-            resolve(catalogs)
-          } catch (err) {
-            reject(err)
-          }
-        })
-        .catch(reject)
-
     })
+
+    return catalogs
   }
 
 }
