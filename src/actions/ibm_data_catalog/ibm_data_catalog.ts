@@ -1,3 +1,4 @@
+import * as changeCase from "change-case"
 import * as crypto from "crypto"
 import * as req from "request"
 import * as reqPromise from "request-promise-native"
@@ -161,7 +162,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     // add attachment to the asset, pointing to PNG in COS
     await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
 
-    // TODO any response other than this?
+    // just sending an empty response
     return new Hub.ActionResponse()
   }
 
@@ -235,10 +236,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const { assetType } = transaction
 
-    const entityData = this.getEntityData(transaction)
-    log("entityData", entityData)
+    const entityData = await this.getEntityData(transaction)
+    if (!entityData) {
+      throw new Error("Unable to get entityData.")
+    }
 
-    const tags = this.getTags(entityData)
+    const tags = this.getTags(entityData, transaction)
     log("tags", tags)
 
     // IBM DataCatalog error:
@@ -276,7 +279,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return response.asset_id
   }
 
-  getEntityData(transaction: Transaction): any {
+  async getEntityData(transaction: Transaction) {
     switch (transaction.type) {
       case Hub.ActionType.Query:
         return this.getQueryEntityData(transaction)
@@ -285,7 +288,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
   }
 
-  getQueryEntityData(transaction: Transaction): any {
+  async getQueryEntityData(transaction: Transaction) {
     const { request } = transaction
     const scheduledPlan = this.clone(request.scheduledPlan)
     const dataJSON = this.clone(request.attachment && request.attachment.dataJSON)
@@ -299,17 +302,27 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
   }
 
-  getDashboardEntityData(transaction: Transaction): any {
-    const { request } = transaction
-    const scheduledPlan = this.clone(request.scheduledPlan || {})
+  async getDashboardEntityData(transaction: Transaction) {
+    // fetch dashboard data from Looker API
+    const { looker_api_url } = transaction.request.params
 
-    // TODO get dataJSON for dashboard looks from Looker API
-    const dataJSON = {
-      fields: {
-        measures: [],
-        dimensions: [],
-      },
+    const itemUrl = this.getLookerItemUrl(transaction)
+    if (!itemUrl) {
+      throw new Error("Unable to determine dashboard URL.")
     }
+
+    const options: any = {
+      method: "POST",
+      uri: `${looker_api_url}/${itemUrl.pathname}`,
+      headers: {
+        Authorization: `token ${transaction.lookerToken}`,
+        Accept: "application/json",
+      },
+      json: true,
+    }
+
+    const dataJSON = await reqPromise(options)
+    const { scheduledPlan } = transaction.request
 
     return {
       dataJSON,
@@ -317,20 +330,68 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
   }
 
-  getTags(entityData: any) {
-    const { measures, dimensions } = entityData.dataJSON.fields
-    const fields = [].concat(measures, dimensions)
+  getTags(entityData: any, transaction: Transaction) {
+    log("getTags")
+    switch (transaction.type) {
+      case Hub.ActionType.Query:
+        return this.getQueryTags(entityData)
+      case Hub.ActionType.Dashboard:
+        return this.getDashboardTags(entityData)
+    }
+  }
+
+  getQueryTags(entityData: any) {
+    log("getQueryTags")
 
     // using a Set to ensure unique tags
     const set = new Set()
-    const keys = ["label_short", "view_label"]
 
-    fields.forEach((field: any) => {
-      keys.forEach((key) => {
-        if (field[key]) { set.add(field[key]) }
+    try {
+      const { measures, dimensions } = entityData.dataJSON.fields
+      const fields = [].concat(measures, dimensions)
+
+      const keys = ["label_short", "view_label"]
+
+      fields.forEach((field: any) => {
+        keys.forEach((key) => {
+          if (field[key]) {
+            set.add(field[key])
+          }
+        })
       })
-    })
+    } catch (err) {
+      log("Error getting query tags", err)
+    }
 
+    // return a sorted array
+    return [...set].sort()
+  }
+
+  getDashboardTags(entityData: any) {
+    log("getDashboardTags")
+
+    // using a Set to ensure unique tags
+    const set = new Set()
+
+    try {
+      entityData.dashboard_elements.forEach((element: any) => {
+        // add title as a tag
+        if (element.title) {
+          set.add(element.title)
+        }
+        // add field labels from each element
+        if (element.query && element.query.fields) {
+          element.query.fields.forEach((field: string) => {
+            const label = field.split(".")[1]
+            set.add(changeCase.titleCase(label))
+          })
+        }
+      })
+    } catch (err) {
+      log("Error getting dashboard tags", err)
+    }
+
+    // return a sorted array
     return [...set].sort()
   }
 
@@ -407,7 +468,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const renderUrl = this.getLookerRenderUrl(transaction)
     if (!renderUrl) {
-      throw new Error("Unabled to get render_url.")
+      throw new Error("Unabled to get renderUrl.")
     }
     log("render_url:", renderUrl)
 
@@ -500,8 +561,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     log("hash:", hash)
 
     const fileName = this.getPngFilename(transaction)
-    log("fileName:", fileName)
-
     const fileUrl = `${IBM_CLOUD_OBJECT_STORAGE_API}/${bucket.bucket_name}/${fileName}`
     log("fileUrl:", fileUrl)
 

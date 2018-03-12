@@ -34,6 +34,7 @@ function log(...args: any[]) {
 //   log('request', request.attachment.dataJSON.fields.measures)
 // }
 
+// ========
 // import * as Hub from "../../hub"
 // import { IbmDataCatalogAssetAction, Transaction } from "./ibm_data_catalog"
 // const requestData = require("./inventory.json")
@@ -71,8 +72,13 @@ function log(...args: any[]) {
 // const tags = action.getTags(entityData)
 // log('tags', tags)
 
-const disallowedNameRe = /[^a-z0-9_\- \.]/gi
+// ========
+// const disallowedNameRe = /[^a-z0-9_\- \.]/gi
 
-const nname = "A Title with stuff (Some bad stuff) - Some good stuff"
+// const nname = "A Title with stuff (Some bad stuff) - Some good stuff"
 
-log(nname.replace(disallowedNameRe, ''))
+// log(nname.replace(disallowedNameRe, ''))
+
+// ========
+import * as changeCase from "change-case"
+log(changeCase.titleCase('a_snake'))
