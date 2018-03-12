@@ -159,11 +159,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     // add attachment to the asset, pointing to PNG in COS
     await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
 
-    return new Promise<Hub.ActionResponse>((resolve) => {
-      // TODO what response?
-      resolve(new Hub.ActionResponse())
-    })
-
+    return new Hub.ActionResponse()
   }
 
   clone(obj: any): any {
@@ -171,42 +167,37 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async getTransactionFromRequest(request: Hub.ActionRequest) {
-    return new Promise<Transaction>((resolve, reject) => {
+    const { catalogId } = request.formParams
+    if (!catalogId) {
+      throw new Error("Missing catalogId.")
+    }
 
-      const { catalogId } = request.formParams
-      if (!catalogId) {
-        reject("Missing catalogId.")
-        return
-      }
+    const type = this.getRequestType(request)
+    if (!type) {
+      throw new Error("Unable to determine request type.")
+    }
 
-      const type = this.getRequestType(request)
-      if (!type) {
-        reject("Unable to determine request type.")
-        return
-      }
+    const assetType = this.getAssetType(type)
+    if (!assetType) {
+      throw new Error("Unable to determine assetType.")
+    }
 
-      const assetType = this.getAssetType(type)
-      if (!assetType) {
-        reject("Unable to determine asset_type.")
-        return
-      }
+    const [bearerToken, lookerToken] = await Promise.all([
+      this.getBearerToken(request),
+      this.getLookerToken(request),
+    ])
 
-      Promise.all([
-        this.getBearerToken(request),
-        this.getLookerToken(request),
-      ]).then(([bearerToken, lookerToken]) => {
-        resolve({
-          request,
-          type,
-          assetType,
-          bearerToken,
-          lookerToken,
-          catalogId,
-          renderCheckAttempts: 0,
-        })
-      })
+    const transaction: Transaction = {
+      request,
+      type,
+      assetType,
+      bearerToken,
+      lookerToken,
+      catalogId,
+      renderCheckAttempts: 0,
+    }
 
-    })
+    return transaction
   }
 
   getRequestType(request: Hub.ActionRequest) {
@@ -236,17 +227,17 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
   }
 
-  async postAsset(transaction: Transaction) {
-    switch (transaction.type) {
-      case Hub.ActionType.Query:
-        return this.postLookAsset(transaction)
-      case Hub.ActionType.Dashboard:
-        return this.postDashboardAsset(transaction)
-      default:
-        // should never happen
-        return Promise.reject("Unknown transaction type.")
-    }
-  }
+  // async xpostAsset(transaction: Transaction) {
+  //   switch (transaction.type) {
+  //     case Hub.ActionType.Query:
+  //       return this.postLookAsset(transaction)
+  //     case Hub.ActionType.Dashboard:
+  //       return this.postDashboardAsset(transaction)
+  //     default:
+  //       // should never happen
+  //       throw new Error("Unknown transaction type.")
+  //   }
+  // }
 
   postLookAssetOld(transaction: Transaction) {
     log("postLookAssetOld")
@@ -295,56 +286,49 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return options
   }
 
-  async postLookAsset(transaction: Transaction) {
+  async postAsset(transaction: Transaction) {
     log("postLookAsset")
 
-    return new Promise<string>((resolve, reject) => {
-      const { assetType } = transaction
+    const { assetType } = transaction
 
-      const entityData = this.getEntityData(transaction)
-      log("entityData", entityData)
+    const entityData = this.getEntityData(transaction)
+    log("entityData", entityData)
 
-      const tags = this.getTags(entityData)
-      log("tags", tags)
+    const tags = this.getTags(entityData)
+    log("tags", tags)
 
-      const options = {
-        method: "POST",
-        uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
-        headers: {
-          Authorization: `Bearer ${transaction.bearerToken}`,
-          Accept: "application/json",
+    const options = {
+      method: "POST",
+      uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
+      headers: {
+        Authorization: `Bearer ${transaction.bearerToken}`,
+        Accept: "application/json",
+      },
+      json: true,
+      body: {
+        metadata: {
+          asset_type: assetType,
+          name: entityData.scheduledPlan.title,
+          description: `Open in Looker: ${entityData.scheduledPlan.url}`,
+          origin_country: "us",
+          tags,
         },
-        json: true,
-        body: {
-          metadata: {
-            asset_type: assetType,
-            name: entityData.scheduledPlan.title,
-            description: `Open in Looker: ${entityData.scheduledPlan.url}`,
-            origin_country: "us",
-            tags,
-          },
-          entity: {
-            [assetType]: entityData,
-          },
+        entity: {
+          [assetType]: entityData,
         },
-      }
+      },
+    }
 
-      const oldOptions = this.postLookAssetOld(transaction)
-      log("equal", JSON.stringify(oldOptions.body.entity) === JSON.stringify(options.body.entity))
+    // const oldOptions = this.postLookAssetOld(transaction)
+    // log("equal", JSON.stringify(oldOptions.body.entity) === JSON.stringify(options.body.entity))
 
-      reqPromise(options)
-        .then((response) => {
-          try {
-            if (!response.asset_id) {
-              throw new Error("Response does not include access_token.")
-            }
-            resolve(response.asset_id)
-          } catch (err) {
-            reject(err)
-          }
-        })
-        .catch(reject)
-    })
+    const response = await reqPromise(options)
+
+    if (!response.asset_id) {
+      throw new Error("Response does not include asset_id.")
+    }
+
+    return response.asset_id
   }
 
   getEntityData(transaction: Transaction): any {
@@ -372,104 +356,103 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   getDashboardEntityData(transaction: Transaction): any {
     const { request } = transaction
     const scheduledPlan = this.clone(request.scheduledPlan || {})
+    // TODO get dataJSON for dashboard looks from Looker API
     return {
+      dataJSON: {
+        fields: {
+          measures: [],
+          dimensions: [],
+        },
+      },
       scheduledPlan,
     }
   }
 
   getTags(entityData: any) {
-      const { measures, dimensions } = entityData.dataJSON.fields
-      const fields = measures.concat(dimensions)
+    const { measures, dimensions } = entityData.dataJSON.fields
+    const fields = [].concat(measures, dimensions)
 
-      // using a Set to ensure unique tags
-      const set = new Set()
-      const keys = ["label_short", "view_label"]
+    // using a Set to ensure unique tags
+    const set = new Set()
+    const keys = ["label_short", "view_label"]
 
-      fields.forEach((field: any) => {
-        keys.forEach((key) => {
-          if (field[key]) { set.add(field[key]) }
-        })
+    fields.forEach((field: any) => {
+      keys.forEach((key) => {
+        if (field[key]) { set.add(field[key]) }
       })
-
-      return [...set].sort()
-  }
-
-  async postDashboardAsset(transaction: Transaction) {
-    log("postDashboardAsset")
-
-    return new Promise<string>((resolve, reject) => {
-      const { request, assetType } = transaction
-      const { scheduledPlan = {} } = request
-
-      const entityData = {
-        scheduledPlan,
-      }
-
-      const options = {
-        method: "POST",
-        uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
-        headers: {
-          Authorization: `Bearer ${transaction.bearerToken}`,
-          Accept: "application/json",
-        },
-        json: true,
-        body: {
-          metadata: {
-            asset_type: assetType,
-            name: scheduledPlan.title,
-            description: `Open in Looker: ${entityData.scheduledPlan.url}`,
-            origin_country: "us",
-            tags: [], // TODO
-          },
-          entity: {
-            [assetType]: entityData,
-          },
-        },
-      }
-
-      reqPromise(options)
-        .then((response) => {
-          try {
-            if (!response.asset_id) {
-              throw new Error("Response does not include access_token.")
-            }
-            resolve(response.asset_id)
-          } catch (err) {
-            reject(err)
-          }
-        })
-        .catch(reject)
     })
+
+    return [...set].sort()
   }
+
+  // async postDashboardAsset(transaction: Transaction) {
+  //   log("postDashboardAsset")
+
+  //   return new Promise<string>((resolve, reject) => {
+  //     const { request, assetType } = transaction
+  //     const { scheduledPlan = {} } = request
+
+  //     const entityData = {
+  //       scheduledPlan,
+  //     }
+
+  //     const options = {
+  //       method: "POST",
+  //       uri: `${DATA_CATALOG_API}/assets?catalog_id=${transaction.catalogId}`,
+  //       headers: {
+  //         Authorization: `Bearer ${transaction.bearerToken}`,
+  //         Accept: "application/json",
+  //       },
+  //       json: true,
+  //       body: {
+  //         metadata: {
+  //           asset_type: assetType,
+  //           name: scheduledPlan.title,
+  //           description: `Open in Looker: ${entityData.scheduledPlan.url}`,
+  //           origin_country: "us",
+  //           tags: [], // TODO
+  //         },
+  //         entity: {
+  //           [assetType]: entityData,
+  //         },
+  //       },
+  //     }
+
+  //     reqPromise(options)
+  //       .then((response) => {
+  //         try {
+  //           if (!response.asset_id) {
+  //             throw new Error("Response does not include access_token.")
+  //           }
+  //           resolve(response.asset_id)
+  //         } catch (err) {
+  //           reject(err)
+  //         }
+  //       })
+  //       .catch(reject)
+  //   })
+  // }
 
   async getBucket(transaction: Transaction) {
-    return new Promise<any>((resolve, reject) => {
+    const options = {
+      method: "GET",
+      uri: `${DATA_CATALOG_API}/catalogs/${transaction.catalogId}/asset_buckets`,
+      headers: {
+        Authorization: `Bearer ${transaction.bearerToken}`,
+        Accept: "application/json",
+      },
+      json: true,
+    }
 
-      const options = {
-        method: "GET",
-        uri: `${DATA_CATALOG_API}/catalogs/${transaction.catalogId}/asset_buckets`,
-        headers: {
-          Authorization: `Bearer ${transaction.bearerToken}`,
-          Accept: "application/json",
-        },
-        json: true,
-      }
+    const response = await reqPromise(options)
 
-      reqPromise(options)
-        .then((response) => {
-          try {
-            const bucket = response.resources[0]
-            if (!bucket) {
-              throw new Error("Response does not include resources.")
-            }
-            resolve(bucket)
-          } catch (err) {
-            reject(err)
-          }
-        })
-        .catch(reject)
+    const bucket = response.resources[0]
 
-    })
+    if (!bucket) {
+      throw new Error("Response does not include resources.")
+    }
+
+    return bucket
   }
 
   async getLookerPngBuffer(transaction: Transaction) {
