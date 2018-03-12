@@ -593,11 +593,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   debugRequest(request: Hub.ActionRequest) {
-    const clone = this.clone(request)
-    delete clone.attachment.dataBuffer
-    delete clone.attachment.dataJSON
+    const requestInfo = Object.assign({}, request)
+    requestInfo.attachment = Object.assign({}, request.attachment)
+    delete requestInfo.attachment.dataBuffer
+    delete requestInfo.attachment.dataJSON
     log("-".repeat(40))
-    log(JSON.stringify(clone, null, 2))
+    log(JSON.stringify(requestInfo, null, 2))
     log("-".repeat(40))
   }
 
