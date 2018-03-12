@@ -1,0 +1,635 @@
+{
+  "formParams": {
+    "catalogId": "74cb53fa-aa75-42ea-8a4b-3a82a96272d3"
+  },
+  "params": {
+    "ibm_cloud_api_key": "ps2q46n3fjEYFhGefwHla2pCZBR1BHTWpCPxjVHBlfzb",
+    "looker_api_url": "https://4mile.looker.com:19999/api/3.0",
+    "looker_api_client_id": "CKmKH4sdxbvQbmGsF5yn",
+    "looker_api_client_secret": "jnz9YzzNkc35mssf2nFD7dxb"
+  },
+  "lookerVersion": "5.8.7",
+  "type": "query",
+  "attachment": {
+    "mime": "application/json",
+    "fileExtension": "json_detail",
+    "encoding": "utf8",
+    "dataJSON": {
+      "id": null,
+      "supports_pivot_in_db": true,
+      "null_sort_treatment": "high",
+      "from_cache": true,
+      "expired": false,
+      "ran_at": "2018-03-10T17:14:05+00:00",
+      "span": {
+        "operation_name": "RUN_QUERY",
+        "context": {
+          "trace_id": "31c5e5bd67fa84cf55301c9c3565b9df",
+          "span_id": "31c5e5bd67fa84cf55301c9c3565b9df"
+        },
+        "start_time": 1520702086025,
+        "end_time": 1520702086071
+      },
+      "sql": "SELECT \n\tairports.state  AS \"airports.state\",\n\tCOUNT(*) AS \"airports.count\"\nFROM public.airports  AS airports\n\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 500",
+      "sql_explain": "EXPLAIN SELECT \n\tairports.state  AS \"airports.state\",\n\tCOUNT(*) AS \"airports.count\"\nFROM public.airports  AS airports\n\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 500",
+      "fields": {
+        "measures": [
+          {
+            "align": "right",
+            "can_filter": true,
+            "category": "measure",
+            "default_filter_value": null,
+            "description": null,
+            "enumerations": null,
+            "field_group_label": null,
+            "fill_style": null,
+            "fiscal_month_offset": 0,
+            "has_allowed_values": false,
+            "hidden": false,
+            "is_filter": false,
+            "is_numeric": true,
+            "label": "Airports Count",
+            "label_from_parameter": null,
+            "label_short": "Count",
+            "lookml_link": "/projects/faa/files/airports.view.lkml?line=98",
+            "map_layer": null,
+            "name": "airports.count",
+            "requires_refresh_on_sort": false,
+            "sortable": true,
+            "suggestions": null,
+            "supported_measure_types": [],
+            "tags": [],
+            "type": "count",
+            "user_attribute_filter_types": [
+              "number",
+              "advanced_filter_number"
+            ],
+            "value_format": null,
+            "view": "airports",
+            "view_label": "Airports",
+            "dynamic": false,
+            "error": null,
+            "field_group_variant": "Count",
+            "measure": true,
+            "parameter": false,
+            "primary_key": false,
+            "project_name": "faa",
+            "scope": "airports",
+            "source_file": "airports.view.lkml",
+            "source_file_path": "faa/airports.view.lkml",
+            "suggest_dimension": "airports.count",
+            "suggest_explore": "airports",
+            "suggestable": false,
+            "is_timeframe": false,
+            "can_time_filter": false,
+            "time_interval": null,
+            "sql": null,
+            "sql_case": null,
+            "sorted": {
+              "sort_index": 0,
+              "desc": true
+            }
+          }
+        ],
+        "dimensions": [
+          {
+            "align": "left",
+            "can_filter": true,
+            "category": "dimension",
+            "default_filter_value": null,
+            "description": null,
+            "enumerations": null,
+            "field_group_label": null,
+            "fill_style": null,
+            "fiscal_month_offset": 0,
+            "has_allowed_values": false,
+            "hidden": false,
+            "is_filter": false,
+            "is_numeric": false,
+            "label": "Airports State",
+            "label_from_parameter": null,
+            "label_short": "State",
+            "lookml_link": "/projects/faa/files/airports.view.lkml?line=93",
+            "map_layer": null,
+            "name": "airports.state",
+            "requires_refresh_on_sort": false,
+            "sortable": true,
+            "suggestions": null,
+            "supported_measure_types": [
+              "count_distinct",
+              "list"
+            ],
+            "tags": [],
+            "type": "string",
+            "user_attribute_filter_types": [
+              "string",
+              "advanced_filter_string"
+            ],
+            "value_format": null,
+            "view": "airports",
+            "view_label": "Airports",
+            "dynamic": false,
+            "error": null,
+            "field_group_variant": "State",
+            "measure": false,
+            "parameter": false,
+            "primary_key": false,
+            "project_name": "faa",
+            "scope": "airports",
+            "source_file": "airports.view.lkml",
+            "source_file_path": "faa/airports.view.lkml",
+            "suggest_dimension": "airports.state",
+            "suggest_explore": "airports",
+            "suggestable": true,
+            "is_timeframe": false,
+            "can_time_filter": false,
+            "time_interval": null,
+            "sql": null,
+            "sql_case": null
+          }
+        ],
+        "table_calculations": [],
+        "pivots": []
+      },
+      "fill_fields": [],
+      "has_totals": false,
+      "has_row_totals": false,
+      "applied_filters": {},
+      "applied_filter_expression": null,
+      "explore": {
+        "name": "airports",
+        "label": "Airports",
+        "description": null
+      },
+      "timezone": "America/Los_Angeles",
+      "data": [
+        {
+          "airports.state": {
+            "value": "TX"
+          },
+          "airports.count": {
+            "value": 1845,
+            "rendered": "1,845",
+            "links": [
+              {
+                "label": "Show All 1,845",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=TX&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "CA"
+          },
+          "airports.count": {
+            "value": 984,
+            "links": [
+              {
+                "label": "Show All 984",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=CA&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "IL"
+          },
+          "airports.count": {
+            "value": 890,
+            "links": [
+              {
+                "label": "Show All 890",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=IL&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "FL"
+          },
+          "airports.count": {
+            "value": 856,
+            "links": [
+              {
+                "label": "Show All 856",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=FL&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "PA"
+          },
+          "airports.count": {
+            "value": 804,
+            "links": [
+              {
+                "label": "Show All 804",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=PA&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "OH"
+          },
+          "airports.count": {
+            "value": 749,
+            "links": [
+              {
+                "label": "Show All 749",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=OH&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "IN"
+          },
+          "airports.count": {
+            "value": 643,
+            "links": [
+              {
+                "label": "Show All 643",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=IN&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "AK"
+          },
+          "airports.count": {
+            "value": 608,
+            "links": [
+              {
+                "label": "Show All 608",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=AK&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "NY"
+          },
+          "airports.count": {
+            "value": 576,
+            "links": [
+              {
+                "label": "Show All 576",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=NY&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "WI"
+          },
+          "airports.count": {
+            "value": 543,
+            "links": [
+              {
+                "label": "Show All 543",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=WI&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "MO"
+          },
+          "airports.count": {
+            "value": 537,
+            "links": [
+              {
+                "label": "Show All 537",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=MO&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "MN"
+          },
+          "airports.count": {
+            "value": 507,
+            "links": [
+              {
+                "label": "Show All 507",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=MN&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "LA"
+          },
+          "airports.count": {
+            "value": 500,
+            "links": [
+              {
+                "label": "Show All 500",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=LA&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "MI"
+          },
+          "airports.count": {
+            "value": 489,
+            "links": [
+              {
+                "label": "Show All 489",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=MI&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "WA"
+          },
+          "airports.count": {
+            "value": 484,
+            "links": [
+              {
+                "label": "Show All 484",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=WA&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "OK"
+          },
+          "airports.count": {
+            "value": 443,
+            "links": [
+              {
+                "label": "Show All 443",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=OK&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "OR"
+          },
+          "airports.count": {
+            "value": 441,
+            "links": [
+              {
+                "label": "Show All 441",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=OR&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "GA"
+          },
+          "airports.count": {
+            "value": 440,
+            "links": [
+              {
+                "label": "Show All 440",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=GA&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "ND"
+          },
+          "airports.count": {
+            "value": 436,
+            "links": [
+              {
+                "label": "Show All 436",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=ND&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "CO"
+          },
+          "airports.count": {
+            "value": 425,
+            "links": [
+              {
+                "label": "Show All 425",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=CO&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "VA"
+          },
+          "airports.count": {
+            "value": 421,
+            "links": [
+              {
+                "label": "Show All 421",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=VA&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "KS"
+          },
+          "airports.count": {
+            "value": 415,
+            "links": [
+              {
+                "label": "Show All 415",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=KS&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.count": {
+            "value": 4,
+            "links": [
+              {
+                "label": "Show All 4",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=AS&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "GU"
+          },
+          "airports.count": {
+            "value": 3,
+            "links": [
+              {
+                "label": "Show All 3",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=GU&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "MQ"
+          },
+          "airports.count": {
+            "value": 1,
+            "links": [
+              {
+                "label": "Show All 1",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=MQ&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        },
+        {
+          "airports.state": {
+            "value": "WQ"
+          },
+          "airports.count": {
+            "value": 1,
+            "links": [
+              {
+                "label": "Show All 1",
+                "url": "/explore/faa/airports?fields=airports.id,airports.full_name&f[airports.state]=WQ&limit=500",
+                "type": "measure_default"
+              }
+            ]
+          }
+        }
+      ],
+      "drill_menu_build_time": 0.003673
+    }
+  },
+  "scheduledPlan": {
+    "filtersDifferFromLook": false,
+    "queryId": 978,
+    "query": {
+      "id": 978,
+      "view": "airports",
+      "fields": [
+        "airports.state",
+        "airports.count"
+      ],
+      "pivots": null,
+      "fill_fields": null,
+      "filters": null,
+      "filter_expression": null,
+      "sorts": [
+        "airports.count desc"
+      ],
+      "limit": "500",
+      "column_limit": null,
+      "total": null,
+      "row_total": null,
+      "runtime": null,
+      "vis_config": {
+        "map": "usa",
+        "map_projection": "",
+        "show_view_names": true,
+        "quantize_colors": false,
+        "custom_color_enabled": false,
+        "custom_color": "forestgreen",
+        "show_single_value_title": true,
+        "show_comparison": false,
+        "comparison_type": "value",
+        "comparison_reverse_colors": false,
+        "show_comparison_label": true,
+        "type": "looker_geo_choropleth",
+        "stacking": "",
+        "show_value_labels": false,
+        "label_density": 25,
+        "legend_position": "center",
+        "x_axis_gridlines": false,
+        "y_axis_gridlines": true,
+        "limit_displayed_rows": false,
+        "y_axis_combined": true,
+        "show_y_axis_labels": true,
+        "show_y_axis_ticks": true,
+        "y_axis_tick_density": "default",
+        "y_axis_tick_density_custom": 5,
+        "show_x_axis_label": true,
+        "show_x_axis_ticks": true,
+        "x_axis_scale": "auto",
+        "y_axis_scale_mode": "linear",
+        "ordering": "none",
+        "show_null_labels": false,
+        "show_totals_labels": false,
+        "show_silhouette": false,
+        "totals_color": "#808080",
+        "series_types": {}
+      },
+      "filter_config": null,
+      "visible_ui_sections": null,
+      "slug": "twzKp7X",
+      "dynamic_fields": null,
+      "client_id": "gfrB7u45tO4OLs4HECJgVM",
+      "share_url": "https://4mile.looker.com/x/gfrB7u45tO4OLs4HECJgVM",
+      "expanded_share_url": "https://4mile.looker.com/explore/faa/airports?fields=airports.state,airports.count&sorts=airports.count+desc&limit=500&query_timezone=America%2FLos_Angeles&vis=%7B%22map%22%3A%22usa%22%2C%22map_projection%22%3A%22%22%2C%22show_view_names%22%3Atrue%2C%22quantize_colors%22%3Afalse%2C%22custom_color_enabled%22%3Afalse%2C%22custom_color%22%3A%22forestgreen%22%2C%22show_single_value_title%22%3Atrue%2C%22show_comparison%22%3Afalse%2C%22comparison_type%22%3A%22value%22%2C%22comparison_reverse_colors%22%3Afalse%2C%22show_comparison_label%22%3Atrue%2C%22type%22%3A%22looker_geo_choropleth%22%2C%22stacking%22%3A%22%22%2C%22show_value_labels%22%3Afalse%2C%22label_density%22%3A25%2C%22legend_position%22%3A%22center%22%2C%22x_axis_gridlines%22%3Afalse%2C%22y_axis_gridlines%22%3Atrue%2C%22limit_displayed_rows%22%3Afalse%2C%22y_axis_combined%22%3Atrue%2C%22show_y_axis_labels%22%3Atrue%2C%22show_y_axis_ticks%22%3Atrue%2C%22y_axis_tick_density%22%3A%22default%22%2C%22y_axis_tick_density_custom%22%3A5%2C%22show_x_axis_label%22%3Atrue%2C%22show_x_axis_ticks%22%3Atrue%2C%22x_axis_scale%22%3A%22auto%22%2C%22y_axis_scale_mode%22%3A%22linear%22%2C%22ordering%22%3A%22none%22%2C%22show_null_labels%22%3Afalse%2C%22show_totals_labels%22%3Afalse%2C%22show_silhouette%22%3Afalse%2C%22totals_color%22%3A%22%23808080%22%2C%22series_types%22%3A%7B%7D%7D&origin=share-expanded",
+      "url": "/explore/faa/airports?fields=airports.state,airports.count&sorts=airports.count+desc&limit=500&query_timezone=America%2FLos_Angeles&vis=%7B%22map%22%3A%22usa%22%2C%22map_projection%22%3A%22%22%2C%22show_view_names%22%3Atrue%2C%22quantize_colors%22%3Afalse%2C%22custom_color_enabled%22%3Afalse%2C%22custom_color%22%3A%22forestgreen%22%2C%22show_single_value_title%22%3Atrue%2C%22show_comparison%22%3Afalse%2C%22comparison_type%22%3A%22value%22%2C%22comparison_reverse_colors%22%3Afalse%2C%22show_comparison_label%22%3Atrue%2C%22type%22%3A%22looker_geo_choropleth%22%2C%22stacking%22%3A%22%22%2C%22show_value_labels%22%3Afalse%2C%22label_density%22%3A25%2C%22legend_position%22%3A%22center%22%2C%22x_axis_gridlines%22%3Afalse%2C%22y_axis_gridlines%22%3Atrue%2C%22limit_displayed_rows%22%3Afalse%2C%22y_axis_combined%22%3Atrue%2C%22show_y_axis_labels%22%3Atrue%2C%22show_y_axis_ticks%22%3Atrue%2C%22y_axis_tick_density%22%3A%22default%22%2C%22y_axis_tick_density_custom%22%3A5%2C%22show_x_axis_label%22%3Atrue%2C%22show_x_axis_ticks%22%3Atrue%2C%22x_axis_scale%22%3A%22auto%22%2C%22y_axis_scale_mode%22%3A%22linear%22%2C%22ordering%22%3A%22none%22%2C%22show_null_labels%22%3Afalse%2C%22show_totals_labels%22%3Afalse%2C%22show_silhouette%22%3Afalse%2C%22totals_color%22%3A%22%23808080%22%2C%22series_types%22%3A%7B%7D%7D",
+      "query_timezone": "America/Los_Angeles",
+      "has_table_calculations": false,
+      "model": "faa"
+    },
+    "scheduledPlanId": 88,
+    "title": "Airports by State",
+    "type": "Look",
+    "url": "https://4mile.looker.com/looks/8?qid=gfrB7u45tO4OLs4HECJgVM"
+  },
+  "instanceId": "9a025967bab717ddee35421b5ac4e77a",
+  "webhookId": "1538dbcf1a9d2cf83e1dc2dcdf11442a"
+}

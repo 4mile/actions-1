@@ -1,0 +1,654 @@
+{
+  "formParams": {
+    "catalog_id": "41ef2ef7-dd43-4f54-b709-812f139c6bb2"
+  },
+  "params": {
+    "ibm_cloud_api_key": "ps2q46n3fjEYFhGefwHla2pCZBR1BHTWpCPxjVHBlfzb"
+  },
+  "lookerVersion": "5.8.7",
+  "type": "query",
+  "attachment": {
+    "mime": "application/json",
+    "fileExtension": "json_detail",
+    "encoding": "utf8",
+    "dataJSON": {
+      "id": null,
+      "truncated": true,
+      "supports_pivot_in_db": true,
+      "null_sort_treatment": "high",
+      "from_cache": true,
+      "expired": false,
+      "ran_at": "2018-03-09T00:33:14+00:00",
+      "span": {
+        "operation_name": "RUN_QUERY",
+        "context": {
+          "trace_id": "459b74e1d1c981c4259c8546de9f961d",
+          "span_id": "459b74e1d1c981c4259c8546de9f961d"
+        },
+        "start_time": 1520556176230,
+        "end_time": 1520556176289
+      },
+      "sql": "SELECT \n\tinventory_items.cost  AS \"inventory_items.cost\",\n\tinventory_items.id  AS \"inventory_items.id\",\n\tinventory_items.product_brand  AS \"inventory_items.product_brand\",\n\tinventory_items.product_category  AS \"inventory_items.product_category\",\n\tDATE(inventory_items.created_at ) AS \"inventory_items.created_date\"\nFROM public.order_items  AS order_items\nLEFT JOIN public.inventory_items  AS inventory_items ON order_items.inventory_item_id = inventory_items.id \n\nGROUP BY 1,2,3,4,5\nORDER BY 5 DESC\nLIMIT 10",
+      "sql_explain": "EXPLAIN SELECT \n\tinventory_items.cost  AS \"inventory_items.cost\",\n\tinventory_items.id  AS \"inventory_items.id\",\n\tinventory_items.product_brand  AS \"inventory_items.product_brand\",\n\tinventory_items.product_category  AS \"inventory_items.product_category\",\n\tDATE(inventory_items.created_at ) AS \"inventory_items.created_date\"\nFROM public.order_items  AS order_items\nLEFT JOIN public.inventory_items  AS inventory_items ON order_items.inventory_item_id = inventory_items.id \n\nGROUP BY 1,2,3,4,5\nORDER BY 5 DESC\nLIMIT 10",
+      "fields": {
+        "measures": [],
+        "dimensions": [
+          {
+            "align": "right",
+            "can_filter": true,
+            "category": "dimension",
+            "default_filter_value": null,
+            "description": null,
+            "enumerations": null,
+            "field_group_label": null,
+            "fill_style": null,
+            "fiscal_month_offset": 0,
+            "has_allowed_values": false,
+            "hidden": false,
+            "is_filter": false,
+            "is_numeric": true,
+            "label": "Inventory Items Cost",
+            "label_from_parameter": null,
+            "label_short": "Cost",
+            "lookml_link": "/projects/the_look/files/inventory_items.view.lkml?line=10",
+            "map_layer": null,
+            "name": "inventory_items.cost",
+            "requires_refresh_on_sort": false,
+            "sortable": true,
+            "suggestions": null,
+            "supported_measure_types": [
+              "count_distinct",
+              "average",
+              "min",
+              "max",
+              "median"
+            ],
+            "tags": [],
+            "type": "number",
+            "user_attribute_filter_types": [
+              "number",
+              "advanced_filter_number"
+            ],
+            "value_format": null,
+            "view": "inventory_items",
+            "view_label": "Inventory Items",
+            "dynamic": false,
+            "error": null,
+            "field_group_variant": "Cost",
+            "measure": false,
+            "parameter": false,
+            "primary_key": false,
+            "project_name": "the_look",
+            "scope": "inventory_items",
+            "source_file": "inventory_items.view.lkml",
+            "source_file_path": "the_look/inventory_items.view.lkml",
+            "suggest_dimension": "inventory_items.cost",
+            "suggest_explore": "order_items",
+            "suggestable": false,
+            "is_timeframe": false,
+            "can_time_filter": false,
+            "time_interval": null,
+            "sql": null,
+            "sql_case": null
+          },
+          {
+            "align": "right",
+            "can_filter": true,
+            "category": "dimension",
+            "default_filter_value": null,
+            "description": null,
+            "enumerations": null,
+            "field_group_label": null,
+            "fill_style": null,
+            "fiscal_month_offset": 0,
+            "has_allowed_values": false,
+            "hidden": false,
+            "is_filter": false,
+            "is_numeric": true,
+            "label": "Inventory Items ID",
+            "label_from_parameter": null,
+            "label_short": "ID",
+            "lookml_link": "/projects/the_look/files/inventory_items.view.lkml?line=4",
+            "map_layer": null,
+            "name": "inventory_items.id",
+            "requires_refresh_on_sort": false,
+            "sortable": true,
+            "suggestions": null,
+            "supported_measure_types": [
+              "count_distinct",
+              "average",
+              "min",
+              "max",
+              "median"
+            ],
+            "tags": [],
+            "type": "number",
+            "user_attribute_filter_types": [
+              "number",
+              "advanced_filter_number"
+            ],
+            "value_format": null,
+            "view": "inventory_items",
+            "view_label": "Inventory Items",
+            "dynamic": false,
+            "error": null,
+            "field_group_variant": "ID",
+            "measure": false,
+            "parameter": false,
+            "primary_key": true,
+            "project_name": "the_look",
+            "scope": "inventory_items",
+            "source_file": "inventory_items.view.lkml",
+            "source_file_path": "the_look/inventory_items.view.lkml",
+            "suggest_dimension": "inventory_items.id",
+            "suggest_explore": "order_items",
+            "suggestable": false,
+            "is_timeframe": false,
+            "can_time_filter": false,
+            "time_interval": null,
+            "sql": null,
+            "sql_case": null
+          },
+          {
+            "align": "left",
+            "can_filter": true,
+            "category": "dimension",
+            "default_filter_value": null,
+            "description": null,
+            "enumerations": null,
+            "field_group_label": null,
+            "fill_style": null,
+            "fiscal_month_offset": 0,
+            "has_allowed_values": false,
+            "hidden": false,
+            "is_filter": false,
+            "is_numeric": false,
+            "label": "Inventory Items Product Brand",
+            "label_from_parameter": null,
+            "label_short": "Product Brand",
+            "lookml_link": "/projects/the_look/files/inventory_items.view.lkml?line=29",
+            "map_layer": null,
+            "name": "inventory_items.product_brand",
+            "requires_refresh_on_sort": false,
+            "sortable": true,
+            "suggestions": null,
+            "supported_measure_types": [
+              "count_distinct",
+              "list"
+            ],
+            "tags": [],
+            "type": "string",
+            "user_attribute_filter_types": [
+              "string",
+              "advanced_filter_string"
+            ],
+            "value_format": null,
+            "view": "inventory_items",
+            "view_label": "Inventory Items",
+            "dynamic": false,
+            "error": null,
+            "field_group_variant": "Product Brand",
+            "measure": false,
+            "parameter": false,
+            "primary_key": false,
+            "project_name": "the_look",
+            "scope": "inventory_items",
+            "source_file": "inventory_items.view.lkml",
+            "source_file_path": "the_look/inventory_items.view.lkml",
+            "suggest_dimension": "inventory_items.product_brand",
+            "suggest_explore": "order_items",
+            "suggestable": true,
+            "is_timeframe": false,
+            "can_time_filter": false,
+            "time_interval": null,
+            "sql": null,
+            "sql_case": null
+          },
+          {
+            "align": "left",
+            "can_filter": true,
+            "category": "dimension",
+            "default_filter_value": null,
+            "description": null,
+            "enumerations": null,
+            "field_group_label": null,
+            "fill_style": null,
+            "fiscal_month_offset": 0,
+            "has_allowed_values": false,
+            "hidden": false,
+            "is_filter": false,
+            "is_numeric": false,
+            "label": "Inventory Items Product Category",
+            "label_from_parameter": null,
+            "label_short": "Product Category",
+            "lookml_link": "/projects/the_look/files/inventory_items.view.lkml?line=34",
+            "map_layer": null,
+            "name": "inventory_items.product_category",
+            "requires_refresh_on_sort": false,
+            "sortable": true,
+            "suggestions": null,
+            "supported_measure_types": [
+              "count_distinct",
+              "list"
+            ],
+            "tags": [],
+            "type": "string",
+            "user_attribute_filter_types": [
+              "string",
+              "advanced_filter_string"
+            ],
+            "value_format": null,
+            "view": "inventory_items",
+            "view_label": "Inventory Items",
+            "dynamic": false,
+            "error": null,
+            "field_group_variant": "Product Category",
+            "measure": false,
+            "parameter": false,
+            "primary_key": false,
+            "project_name": "the_look",
+            "scope": "inventory_items",
+            "source_file": "inventory_items.view.lkml",
+            "source_file_path": "the_look/inventory_items.view.lkml",
+            "suggest_dimension": "inventory_items.product_category",
+            "suggest_explore": "order_items",
+            "suggestable": true,
+            "is_timeframe": false,
+            "can_time_filter": false,
+            "time_interval": null,
+            "sql": null,
+            "sql_case": null
+          },
+          {
+            "align": "left",
+            "can_filter": true,
+            "category": "dimension",
+            "default_filter_value": null,
+            "description": null,
+            "enumerations": null,
+            "field_group_label": "Created Date",
+            "fill_style": "range",
+            "fiscal_month_offset": 0,
+            "has_allowed_values": false,
+            "hidden": false,
+            "is_filter": false,
+            "is_numeric": false,
+            "label": "Inventory Items Created Date",
+            "label_from_parameter": null,
+            "label_short": "Created Date",
+            "lookml_link": "/projects/the_look/files/inventory_items.view.lkml?line=15",
+            "map_layer": null,
+            "name": "inventory_items.created_date",
+            "requires_refresh_on_sort": false,
+            "sortable": true,
+            "suggestions": null,
+            "supported_measure_types": [
+              "count_distinct"
+            ],
+            "tags": [],
+            "type": "date_date",
+            "user_attribute_filter_types": [
+              "datetime",
+              "advanced_filter_datetime"
+            ],
+            "value_format": null,
+            "view": "inventory_items",
+            "view_label": "Inventory Items",
+            "dynamic": false,
+            "error": null,
+            "field_group_variant": "Date",
+            "measure": false,
+            "parameter": false,
+            "primary_key": false,
+            "project_name": "the_look",
+            "scope": "inventory_items",
+            "source_file": "inventory_items.view.lkml",
+            "source_file_path": "the_look/inventory_items.view.lkml",
+            "suggest_dimension": "inventory_items.created_date",
+            "suggest_explore": "order_items",
+            "suggestable": false,
+            "is_timeframe": true,
+            "can_time_filter": false,
+            "time_interval": {
+              "name": "day",
+              "count": 1
+            },
+            "sql": null,
+            "sql_case": null,
+            "sorted": {
+              "sort_index": 0,
+              "desc": true
+            }
+          }
+        ],
+        "table_calculations": [],
+        "pivots": []
+      },
+      "fill_fields": [],
+      "has_totals": false,
+      "has_row_totals": false,
+      "applied_filters": {},
+      "applied_filter_expression": null,
+      "explore": {
+        "name": "order_items",
+        "label": "Order Items",
+        "description": null
+      },
+      "timezone": "America/Los_Angeles",
+      "data": [
+        {
+          "inventory_items.cost": {
+            "value": 31.659720171808004
+          },
+          "inventory_items.id": {
+            "value": 70361
+          },
+          "inventory_items.product_brand": {
+            "value": "Carhartt"
+          },
+          "inventory_items.product_category": {
+            "value": "Fashion Hoodies & Sweatshirts",
+            "filterable_value": "\"Fashion Hoodies & Sweatshirts\""
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-06",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-06&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-06"
+              }
+            ]
+          }
+        },
+        {
+          "inventory_items.cost": {
+            "value": 4.913519918981493
+          },
+          "inventory_items.id": {
+            "value": 153441
+          },
+          "inventory_items.product_brand": {
+            "value": "Allegra K"
+          },
+          "inventory_items.product_category": {
+            "value": "Dresses"
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-04",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-04&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-04"
+              }
+            ]
+          }
+        },
+        {
+          "inventory_items.cost": {
+            "value": 16.43451983122483
+          },
+          "inventory_items.id": {
+            "value": 97865
+          },
+          "inventory_items.product_brand": {
+            "value": "eVogues Apparel"
+          },
+          "inventory_items.product_category": {
+            "value": "Tops & Tees",
+            "filterable_value": "\"Tops & Tees\""
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-04",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-04&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-04"
+              }
+            ]
+          }
+        },
+        {
+          "inventory_items.cost": {
+            "value": 13.63439983317852
+          },
+          "inventory_items.id": {
+            "value": 168629
+          },
+          "inventory_items.product_brand": {
+            "value": "Lee"
+          },
+          "inventory_items.product_category": {
+            "value": "Shorts"
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-04",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-04&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-04"
+              }
+            ]
+          }
+        },
+        {
+          "inventory_items.cost": {
+            "value": 10.976000025868416
+          },
+          "inventory_items.id": {
+            "value": 161443
+          },
+          "inventory_items.product_brand": {
+            "value": "Champion"
+          },
+          "inventory_items.product_category": {
+            "value": "Active"
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-03",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-03&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-03"
+              }
+            ]
+          }
+        },
+        {
+          "inventory_items.cost": {
+            "value": 73.94399975985289
+          },
+          "inventory_items.id": {
+            "value": 134270
+          },
+          "inventory_items.product_brand": {
+            "value": "Kiyonna"
+          },
+          "inventory_items.product_category": {
+            "value": "Dresses"
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-03",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-03&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-03"
+              }
+            ]
+          }
+        },
+        {
+          "inventory_items.cost": {
+            "value": 38.93999978899956
+          },
+          "inventory_items.id": {
+            "value": 153103
+          },
+          "inventory_items.product_brand": {
+            "value": "Orvis"
+          },
+          "inventory_items.product_category": {
+            "value": "Clothing Sets"
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-03",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-03&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-03"
+              }
+            ]
+          }
+        },
+        {
+          "inventory_items.cost": {
+            "value": 27.490259972681997
+          },
+          "inventory_items.id": {
+            "value": 226136
+          },
+          "inventory_items.product_brand": {
+            "value": "Ray-Ban"
+          },
+          "inventory_items.product_category": {
+            "value": "Accessories"
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-03",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-03&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-03"
+              }
+            ]
+          }
+        },
+        {
+          "inventory_items.cost": {
+            "value": 64.88484850558788
+          },
+          "inventory_items.id": {
+            "value": 134038
+          },
+          "inventory_items.product_brand": {
+            "value": "adidas"
+          },
+          "inventory_items.product_category": {
+            "value": "Tops & Tees",
+            "filterable_value": "\"Tops & Tees\""
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-02",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-02&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-02"
+              }
+            ]
+          }
+        },
+        {
+          "inventory_items.cost": {
+            "value": 72.8775005415082
+          },
+          "inventory_items.id": {
+            "value": 153104
+          },
+          "inventory_items.product_brand": {
+            "value": "Robert Rodriguez"
+          },
+          "inventory_items.product_category": {
+            "value": "Blazers & Jackets",
+            "filterable_value": "\"Blazers & Jackets\""
+          },
+          "inventory_items.created_date": {
+            "value": "2018-03-02",
+            "links": [
+              {
+                "label": "by Created Time",
+                "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_time&f[inventory_items.created_date]=2018-03-02&sorts=inventory_items.created_date desc&limit=500&column_limit=50&query_timezone=America%2FLos_Angeles",
+                "type": "drill",
+                "type_label": "Drill into 2018-03-02"
+              }
+            ]
+          }
+        }
+      ],
+      "drill_menu_build_time": 0.039891
+    }
+  },
+  "scheduledPlan": {
+    "filtersDifferFromLook": false,
+    "queryId": 939,
+    "query": {
+      "id": 939,
+      "view": "order_items",
+      "fields": [
+        "inventory_items.cost",
+        "inventory_items.id",
+        "inventory_items.product_brand",
+        "inventory_items.product_category",
+        "inventory_items.created_date"
+      ],
+      "pivots": null,
+      "fill_fields": null,
+      "filters": null,
+      "filter_expression": null,
+      "sorts": [
+        "inventory_items.created_date desc"
+      ],
+      "limit": "10",
+      "column_limit": null,
+      "total": null,
+      "row_total": null,
+      "runtime": null,
+      "vis_config": {
+        "type": "table",
+        "show_view_names": true,
+        "show_row_numbers": true,
+        "truncate_column_names": false,
+        "hide_totals": false,
+        "hide_row_totals": false,
+        "table_theme": "editable",
+        "limit_displayed_rows": false,
+        "enable_conditional_formatting": false,
+        "conditional_formatting_include_totals": false,
+        "conditional_formatting_include_nulls": false
+      },
+      "filter_config": null,
+      "visible_ui_sections": null,
+      "slug": "6sntQJm",
+      "dynamic_fields": null,
+      "client_id": "M4jjgyvm3oBA23u57Ame5K",
+      "share_url": "https://4mile.looker.com/x/M4jjgyvm3oBA23u57Ame5K",
+      "expanded_share_url": "https://4mile.looker.com/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_date&sorts=inventory_items.created_date+desc&limit=10&query_timezone=America%2FLos_Angeles&vis=%7B%22type%22%3A%22table%22%2C%22show_view_names%22%3Atrue%2C%22show_row_numbers%22%3Atrue%2C%22truncate_column_names%22%3Afalse%2C%22hide_totals%22%3Afalse%2C%22hide_row_totals%22%3Afalse%2C%22table_theme%22%3A%22editable%22%2C%22limit_displayed_rows%22%3Afalse%2C%22enable_conditional_formatting%22%3Afalse%2C%22conditional_formatting_include_totals%22%3Afalse%2C%22conditional_formatting_include_nulls%22%3Afalse%7D&origin=share-expanded",
+      "url": "/explore/ecommerce/order_items?fields=inventory_items.cost,inventory_items.id,inventory_items.product_brand,inventory_items.product_category,inventory_items.created_date&sorts=inventory_items.created_date+desc&limit=10&query_timezone=America%2FLos_Angeles&vis=%7B%22type%22%3A%22table%22%2C%22show_view_names%22%3Atrue%2C%22show_row_numbers%22%3Atrue%2C%22truncate_column_names%22%3Afalse%2C%22hide_totals%22%3Afalse%2C%22hide_row_totals%22%3Afalse%2C%22table_theme%22%3A%22editable%22%2C%22limit_displayed_rows%22%3Afalse%2C%22enable_conditional_formatting%22%3Afalse%2C%22conditional_formatting_include_totals%22%3Afalse%2C%22conditional_formatting_include_nulls%22%3Afalse%7D",
+      "query_timezone": "America/Los_Angeles",
+      "has_table_calculations": false,
+      "model": "ecommerce"
+    },
+    "scheduledPlanId": 48,
+    "title": "Inventory",
+    "type": "Look",
+    "url": "https://4mile.looker.com/looks/7?qid=M4jjgyvm3oBA23u57Ame5K"
+  },
+  "instanceId": "9a025967bab717ddee35421b5ac4e77a",
+  "webhookId": "e0b35023e37c0bafa4d29b388b3187da"
+}

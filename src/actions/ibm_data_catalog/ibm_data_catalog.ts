@@ -10,7 +10,7 @@ const BEARER_TOKEN_API = "https://iam.ng.bluemix.net/identity/token"
 const DATA_CATALOG_API = "https://catalogs-yp-prod.mybluemix.net:443/v2"
 const COS_API = "https://s3-api.us-geo.objectstorage.softlayer.net"
 const CHECK_RENDER_MAX_ATTEMPTS = 100
-const CHECK_RENDER_INTERVAL = 2000
+const CHECK_RENDER_INTERVAL = 5000
 
 const QUERY_RENDER_PARAMS: any = {
   width: 800,
@@ -464,9 +464,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const ready = await this.checkLookerRender(renderId, transaction)
     log("ready:", ready)
 
-    const buffer = await this.downloadLookerRender(renderId, transaction)
-
-    return buffer
+    return await this.downloadLookerRender(renderId, transaction)
   }
 
   getLookerItemUrl(transaction: Transaction) {
