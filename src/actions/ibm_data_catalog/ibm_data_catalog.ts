@@ -312,7 +312,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
 
     const options: any = {
-      method: "POST",
+      method: "GET",
       uri: `${looker_api_url}${itemUrl.pathname}`,
       headers: {
         Authorization: `token ${transaction.lookerToken}`,
