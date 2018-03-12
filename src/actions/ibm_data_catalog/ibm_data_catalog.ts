@@ -148,7 +148,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     // get PNG from looker API
     const buffer = await this.getLookerPngBuffer(transaction)
-    if (! (buffer instanceof Buffer)) {
+    if (!(buffer instanceof Buffer)) {
       throw new Error("Unable to get PNG from Looker API.")
     }
     log("buffer file type:", fileType(buffer))
@@ -473,20 +473,20 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async downloadLookerRender(renderId: string, transaction: Transaction) {
-      log("downloadLookerRender")
+    log("downloadLookerRender")
 
-      const { looker_api_url } = transaction.request.params
+    const { looker_api_url } = transaction.request.params
 
-      const options = {
-        method: "GET",
-        uri: `${looker_api_url}/render_tasks/${renderId}/results`,
-        headers: {
-          Authorization: `token ${transaction.lookerToken}`,
-        },
-        encoding: null,
-      }
+    const options = {
+      method: "GET",
+      uri: `${looker_api_url}/render_tasks/${renderId}/results`,
+      headers: {
+        Authorization: `token ${transaction.lookerToken}`,
+      },
+      encoding: null,
+    }
 
-      return reqPromise(options)
+    return reqPromise(options)
   }
 
   async uploadPngToIbmCos(bucket: any, buffer: Buffer, transaction: Transaction) {
