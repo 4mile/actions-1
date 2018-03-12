@@ -283,6 +283,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const scheduledPlan = this.clone(request.scheduledPlan)
     const dataJSON = this.clone(request.attachment && request.attachment.dataJSON)
 
+    // exlude the raw data
     delete dataJSON.data
 
     return {
@@ -294,14 +295,17 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   getDashboardEntityData(transaction: Transaction): any {
     const { request } = transaction
     const scheduledPlan = this.clone(request.scheduledPlan || {})
+
     // TODO get dataJSON for dashboard looks from Looker API
-    return {
-      dataJSON: {
-        fields: {
-          measures: [],
-          dimensions: [],
-        },
+    const dataJSON = {
+      fields: {
+        measures: [],
+        dimensions: [],
       },
+    }
+
+    return {
+      dataJSON,
       scheduledPlan,
     }
   }
@@ -354,7 +358,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const ready = await this.checkLookerRender(renderId, transaction)
     log("ready:", ready)
 
-    return await this.downloadLookerRender(renderId, transaction)
+    return this.downloadLookerRender(renderId, transaction)
   }
 
   getLookerItemUrl(transaction: Transaction) {
@@ -479,12 +483,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         encoding: null,
       }
 
-      const response = await reqPromise(options)
-
-      log("keys", Object.keys(response))
-      log("typeof response", typeof response)
-
-      return response
+      return reqPromise(options)
   }
 
   async uploadPngToIbmCos(bucket: any, buffer: Buffer, transaction: Transaction) {
