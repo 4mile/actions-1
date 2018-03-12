@@ -481,7 +481,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
       const response = await reqPromise(options)
 
-      return response.body
+      log("keys", Object.keys(response))
+      log("typeof response", typeof response)
+
+      return response
   }
 
   async uploadPngToIbmCos(bucket: any, buffer: Buffer, transaction: Transaction) {
