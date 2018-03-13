@@ -420,7 +420,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const ready = await this.checkLookerRender(renderId, transaction)
     log("ready:", ready)
 
-    const buffer = this.downloadLookerRender(renderId, transaction)
+    const buffer = await this.downloadLookerRender(renderId, transaction)
 
     if (!(buffer instanceof Buffer)) {
       throw "Unable to get PNG from Looker API."
