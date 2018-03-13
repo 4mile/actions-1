@@ -149,9 +149,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     // get PNG from looker API
     const buffer = await this.getLookerPngBuffer(transaction)
-    if (!(buffer instanceof Buffer)) {
-      throw new Error("Unable to get PNG from Looker API.")
-    }
     log("buffer file type:", fileType(buffer))
     log("buffer length:", buffer.length)
 
@@ -171,19 +168,23 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async getTransactionFromRequest(request: Hub.ActionRequest) {
+    if (!request.scheduledPlan) {
+      throw "Missing scheduledPlan."
+    }
+
     const { catalogId } = request.formParams
     if (!catalogId) {
-      throw new Error("Missing catalogId.")
+      throw "Missing catalogId."
     }
 
     const type = this.getRequestType(request)
     if (!type) {
-      throw new Error("Unable to determine request type.")
+      throw "Unable to determine request type."
     }
 
     const assetType = this.getAssetType(type)
     if (!assetType) {
-      throw new Error("Unable to determine assetType.")
+      throw "Unable to determine assetType."
     }
 
     const [bearerToken, lookerToken] = await Promise.all([
@@ -207,18 +208,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   getRequestType(request: Hub.ActionRequest) {
     // for now using scheduledPlan.type
     // because request.type is always 'query'
-    const planType = (
-      request.scheduledPlan
-      && request.scheduledPlan.type
-    )
-
-    switch (planType) {
+    switch (request.scheduledPlan!.type) {
       case "Look":
         return Hub.ActionType.Query
       case "Dashboard":
         return Hub.ActionType.Dashboard
-      default:
-        throw new Error("Unable to determine request type")
     }
   }
 
@@ -238,7 +232,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const entityData = await this.getEntityData(transaction)
     if (!entityData) {
-      throw new Error("Unable to get entityData.")
+      throw "Unable to get entityData."
     }
 
     const tags = this.getTags(entityData, transaction)
@@ -273,7 +267,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const response = await reqPromise(options)
 
     if (!response.asset_id) {
-      throw new Error("Response does not include asset_id.")
+      throw "Response does not include asset_id."
     }
 
     return response.asset_id
@@ -290,8 +284,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async getQueryEntityData(transaction: Transaction) {
     const { request } = transaction
-    const scheduledPlan = this.clone(request.scheduledPlan)
-    const dataJSON = this.clone(request.attachment && request.attachment.dataJSON)
+    const scheduledPlan = this.clone(request.scheduledPlan!)
+    const dataJSON = this.clone(request.attachment!.dataJSON)
 
     // exlude the raw data
     delete dataJSON.data
@@ -308,7 +302,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const itemUrl = this.getLookerItemUrl(transaction)
     if (!itemUrl) {
-      throw new Error("Unable to determine dashboard URL.")
+      throw "Unable to determine dashboard URL."
     }
 
     const options: any = {
@@ -411,7 +405,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const bucket = response.resources[0]
 
     if (!bucket) {
-      throw new Error("Response does not include resources.")
+      throw "Response does not include resources."
     }
 
     return bucket
@@ -426,14 +420,17 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const ready = await this.checkLookerRender(renderId, transaction)
     log("ready:", ready)
 
-    return this.downloadLookerRender(renderId, transaction)
+    const buffer = this.downloadLookerRender(renderId, transaction)
+
+    if (!(buffer instanceof Buffer)) {
+      throw "Unable to get PNG from Looker API."
+    }
+
+    return buffer
   }
 
   getLookerItemUrl(transaction: Transaction) {
-    const itemUrl = (
-      transaction.request.scheduledPlan
-      && transaction.request.scheduledPlan.url
-    )
+    const itemUrl = transaction.request.scheduledPlan!.url
     if (!itemUrl) { return }
 
     const parsedUrl = url.parse(itemUrl)
@@ -468,7 +465,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     const renderUrl = this.getLookerRenderUrl(transaction)
     if (!renderUrl) {
-      throw new Error("Unabled to get renderUrl.")
+      throw "Unabled to get renderUrl."
     }
     log("render_url:", renderUrl)
 
@@ -491,7 +488,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const response = await reqPromise(options)
 
     if (!response.id) {
-      throw new Error("Response does not include id.")
+      throw "Response does not include id."
     }
 
     return response.id
@@ -523,7 +520,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         reqPromise(options)
           .then((response) => {
             if (!response.status) {
-              throw new Error("Response does not include status.")
+              throw "Response does not include status."
             }
             if (response.status === "success") {
               return resolve(true)
@@ -688,7 +685,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const response = await reqPromise(options)
 
     if (!response.access_token) {
-      throw new Error("Response does not include access_token.")
+      throw "Response does not include access_token."
     }
 
     log("bearer_token received")
@@ -716,7 +713,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const response = await reqPromise(options)
 
     if (!response.access_token) {
-      throw new Error("Response does not include access_token.")
+      throw "Response does not include access_token."
     }
 
     return response.access_token
