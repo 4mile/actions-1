@@ -43,6 +43,7 @@ export interface Transaction {
   lookerToken: string,
   catalogId: string,
   assetType: string,
+  itemUrl: any,
   renderCheckAttempts: number,
 }
 
@@ -187,6 +188,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       throw "Unable to determine assetType."
     }
 
+    const itemUrl = this.getLookerItemUrl(request)
+    if (!itemUrl) {
+      throw "Unable to determine itemUrl."
+    }
+
     const [bearerToken, lookerToken] = await Promise.all([
       this.getBearerToken(request),
       this.getLookerToken(request),
@@ -199,6 +205,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       bearerToken,
       lookerToken,
       catalogId,
+      itemUrl,
       renderCheckAttempts: 0,
     }
 
@@ -228,14 +235,22 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async postAsset(transaction: Transaction) {
     log("postLookAsset")
 
-    const { assetType } = transaction
+    const { assetType, itemUrl } = transaction
+    const { protocol, hostname, pathname } = itemUrl
 
     const entityData = await this.getEntityData(transaction)
     if (!entityData) {
       throw "Unable to get entityData."
     }
 
-    const tags = this.getTags(entityData, transaction)
+    // Please use only letters, numbers, underscore, dash, #, @ for 'tags'
+    // still allowing spaces
+    const disallowedTagRegex = /[^a-z0-9_ \-#@]/gi
+
+    const tags = (
+      this.getTags(entityData, transaction)
+        .map((tag) => tag.replace(disallowedTagRegex, ""))
+    )
     log("tags", tags)
 
     // IBM DataCatalog error:
@@ -254,7 +269,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         metadata: {
           asset_type: assetType,
           name: entityData.scheduledPlan.title.replace(disallowedNameRegex, ""),
-          description: `Open in Looker: ${entityData.scheduledPlan.url}`,
+          description: `Open in Looker: ${protocol}//${hostname}${pathname}`,
           origin_country: "us",
           tags,
         },
@@ -299,11 +314,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   async getDashboardEntityData(transaction: Transaction) {
     // fetch dashboard data from Looker API
     const { looker_api_url } = transaction.request.params
-
-    const itemUrl = this.getLookerItemUrl(transaction)
-    if (!itemUrl) {
-      throw "Unable to determine dashboard URL."
-    }
+    const { itemUrl } = transaction
 
     const options: any = {
       method: "GET",
@@ -324,13 +335,15 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
   }
 
-  getTags(entityData: any, transaction: Transaction) {
+  getTags(entityData: any, transaction: Transaction): string[] {
     log("getTags")
     switch (transaction.type) {
       case Hub.ActionType.Query:
         return this.getQueryTags(entityData)
       case Hub.ActionType.Dashboard:
         return this.getDashboardTags(entityData)
+      default:
+        throw "Unsupported type."
     }
   }
 
@@ -429,8 +442,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     return buffer
   }
 
-  getLookerItemUrl(transaction: Transaction) {
-    const itemUrl = transaction.request.scheduledPlan!.url
+  getLookerItemUrl(request: Hub.ActionRequest) {
+    const itemUrl = request.scheduledPlan!.url
     if (!itemUrl) { return }
 
     const parsedUrl = url.parse(itemUrl)
@@ -441,9 +454,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   getLookerRenderUrl(transaction: Transaction) {
     log("getLookerRenderUrl")
     const { looker_api_url } = transaction.request.params
-
-    const itemUrl = this.getLookerItemUrl(transaction)
-    if (!itemUrl) { return }
+    const { itemUrl } = transaction
 
     const params = (
       transaction.type === Hub.ActionType.Query
@@ -591,14 +602,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   getPngFilename(transaction: Transaction) {
-    const itemUrl = this.getLookerItemUrl(transaction)
-    if (!itemUrl) { return }
-    if (!itemUrl.pathname) { return }
+    const { itemUrl } = transaction
 
     const fileName = (
       itemUrl.pathname
         .split("/")
-        .filter((param) => !!param)
+        .filter((param: string) => !!param)
         .join("_")
     )
 

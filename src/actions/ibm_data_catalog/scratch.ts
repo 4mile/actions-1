@@ -93,3 +93,7 @@ function log(...args: any[]) {
 
 // const tags = action.getDashboardTags(entityData)
 // log('tags', tags)
+
+import * as url from "url"
+const u = url.parse("https://4mile.looker.com/looks/7?qid=M4jjgyvm3oBA23u57Ame5K")
+log(u)
