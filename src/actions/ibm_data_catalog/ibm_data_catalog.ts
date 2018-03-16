@@ -144,6 +144,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     const assetId = await this.postAsset(transaction)
     log("assetId:", assetId)
 
+    // set data_asset attribute on the posted asset
+    await this.postAssetAttribute(assetId, transaction)
+
     // get bucket for this catalog - using first one for now
     const bucket = await this.getBucket(transaction)
     log("bucket:", bucket)
@@ -275,10 +278,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         },
         entity: {
           [assetType]: entityData,
-          // data_asset: {
-          //   "mime-type": "image/png",
-          //   "dataset": false,
-          // },
+          data_asset: {
+            "mime-type": "image/png",
+            "dataset": false,
+          },
         },
       },
     }
@@ -404,6 +407,32 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
     // return a sorted array
     return [...set].sort()
+  }
+
+  async postAssetAttribute(assetId: string, transaction: Transaction) {
+    log("postAssetAttribute")
+
+    const options = {
+      method: "POST",
+      uri: `${IBM_DATA_CATALOG_API}/assets/${assetId}/attributes?catalog_id=${transaction.catalogId}`,
+      headers: {
+        Authorization: `Bearer ${transaction.bearerToken}`,
+        Accept: "application/json",
+      },
+      json: true,
+      body: {
+        name: "data_asset",
+        entity: {},
+      },
+    }
+
+    const response = await reqPromise(options)
+
+    if (!response.data_asset) {
+      throw "Unable to set data_asset attribute."
+    }
+
+    return
   }
 
   async getBucket(transaction: Transaction) {
@@ -654,7 +683,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       },
       json: true,
       body: {
-        asset_type: assetType,
+        asset_type: "data_asset",
         connection_id: connectionId,
         connection_path: connectionPath,
         name: `${assetType} Preview`,
