@@ -275,6 +275,10 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
         },
         entity: {
           [assetType]: entityData,
+          data_asset: {
+            "mime-type": "image/png",
+            "dataset": false,
+          },
         },
       },
     }
@@ -650,9 +654,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       },
       json: true,
       body: {
-        asset_type: assetType,
+        asset_type: "data_asset",
         connection_id: connectionId,
         connection_path: connectionPath,
+        name: `${assetType} Preview`,
+        mime: "image/png",
       },
     }
 
