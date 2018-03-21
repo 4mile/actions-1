@@ -50,9 +50,9 @@ export interface Transaction {
 export class IbmDataCatalogAssetAction extends Hub.Action {
 
   name = "ibm_data_catalog"
-  label = "IBM Data Catalog"
+  label = "IBM Watson Knowledge Catalog"
   iconName = "ibm_data_catalog/ibm_logo.png"
-  description = "Add an asset to an IBM Data Catalog"
+  description = "Add an asset to an IBM Watson Knowledge Catalog"
   supportedActionTypes = [Hub.ActionType.Query, Hub.ActionType.Dashboard]
   supportedFormats = [Hub.ActionFormat.JsonDetail, Hub.ActionFormat.CsvZip]
   requiredFields = []
