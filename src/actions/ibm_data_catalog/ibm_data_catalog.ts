@@ -262,6 +262,25 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
             key: "type",
             type: "string",
             facet: true,
+            is_array: false,
+          },
+          {
+            key: "title",
+            type: "string",
+            facet: true,
+            is_array: false,
+          },
+          {
+            key: "url",
+            type: "string",
+            facet: true,
+            is_array: false,
+          },
+          {
+            key: "share_url",
+            type: "string",
+            facet: true,
+            is_array: false,
           },
         ],
         name: assetType,
@@ -286,7 +305,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
 
     const response = await reqPromise(options)
-    if (! response.resources) {
+    if (!response.resources) {
       return false
     }
 
