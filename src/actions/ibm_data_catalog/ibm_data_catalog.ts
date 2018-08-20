@@ -240,6 +240,11 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async addAssetType(transaction: Transaction) {
+    const exists = this.checkIfAssetTypeExists(transaction)
+    if (exists) {
+      return
+    }
+
     const { assetType } = transaction
 
     const options = {
@@ -263,14 +268,31 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       },
     }
 
-    try {
-      const response = await reqPromise(options)
-      log("response", response)
-    } catch (err) {
-      log("error", err)
+    await reqPromise(options)
+  }
+
+  async checkIfAssetTypeExists(transaction: Transaction) {
+
+    const { assetType } = transaction
+
+    const options = {
+      method: "GET",
+      uri: `${IBM_DATA_CATALOG_API}/asset_types?catalog_id=${transaction.catalogId}`,
+      headers: {
+        Authorization: `Bearer ${transaction.bearerToken}`,
+        Accept: "application/json",
+      },
+      json: true,
     }
 
-    return
+    const response = await reqPromise(options)
+    if (! response.resources) {
+      return false
+    }
+
+    const exists = response.resources.some((resource: any) => resource.name === assetType)
+    return exists
+
   }
 
   async postAsset(transaction: Transaction) {
