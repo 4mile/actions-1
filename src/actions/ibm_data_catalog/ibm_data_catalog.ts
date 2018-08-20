@@ -7,6 +7,7 @@ import * as url from "url"
 import * as Hub from "../../hub"
 const fileType = require("file-type")
 
+// convert to env vars?
 const IBM_BEARER_TOKEN_API = "https://iam.ng.bluemix.net/identity/token"
 const IBM_DATA_CATALOG_API = "https://api.dataplatform.cloud.ibm.com/v2"
 const IBM_CLOUD_OBJECT_STORAGE_API = "https://s3-api.us-geo.objectstorage.softlayer.net"
