@@ -141,6 +141,9 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     *
     */
 
+    // ensure that this catalog has the needed asset type defined
+    await this.addAssetType(transaction)
+
     // POST asset with metadata
     const assetId = await this.postAsset(transaction)
     log("assetId:", assetId)
@@ -234,6 +237,36 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       case Hub.ActionType.Dashboard:
         return "Looker Dashboard"
     }
+  }
+
+  async addAssetType(transaction: Transaction) {
+    const { assetType } = transaction
+
+    const options = {
+      method: "POST",
+      uri: `${IBM_DATA_CATALOG_API}/asset_types?catalog_id=${transaction.catalogId}`,
+      headers: {
+        Authorization: `Bearer ${transaction.bearerToken}`,
+        Accept: "application/json",
+      },
+      json: true,
+      body: {
+        description: assetType,
+        fields: [
+          {
+            key: "type",
+            type: "string",
+            facet: true,
+          },
+        ],
+        name: assetType,
+      },
+    }
+
+    const response = await reqPromise(options)
+    log("response", response)
+
+    return
   }
 
   async postAsset(transaction: Transaction) {
