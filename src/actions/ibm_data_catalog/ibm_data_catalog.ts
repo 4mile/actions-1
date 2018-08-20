@@ -263,8 +263,12 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       },
     }
 
-    const response = await reqPromise(options)
-    log("response", response)
+    try {
+      const response = await reqPromise(options)
+      log("response", response)
+    } catch (err) {
+      log("error", err)
+    }
 
     return
   }
