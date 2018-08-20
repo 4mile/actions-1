@@ -142,7 +142,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     */
 
     // ensure that this catalog has the needed asset type defined
-    await this.addAssetType(transaction)
+    // await this.addAssetType(transaction)
 
     // POST asset with metadata
     const assetId = await this.postAsset(transaction)
