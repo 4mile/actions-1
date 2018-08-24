@@ -5,7 +5,7 @@ import * as reqPromise from "request-promise-native"
 import * as stream from "stream"
 import * as url from "url"
 import * as Hub from "../../hub"
-const fileType = require("file-type")
+// const fileType = require("file-type")
 
 // convert to env vars?
 const IBM_BEARER_TOKEN_API = "https://iam.ng.bluemix.net/identity/token"
@@ -26,7 +26,15 @@ const DASHBOARD_RENDER_PARAMS: any = {
 function log(...args: any[]) {
   console.log.apply(console, args)
 }
-
+function logJson(...args: any[]) {
+  const items = args.map((arg: any) => {
+    if (typeof arg === "object") {
+      return JSON.stringify(arg, null, 2)
+    }
+    return arg
+  })
+  log(items)
+}
 /*
 NOTES:
 
@@ -240,7 +248,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async addAssetType(transaction: Transaction) {
-    const exists = this.checkIfAssetTypeExists(transaction)
+    const exists = await this.checkIfAssetTypeExists(transaction)
     log("exists", exists)
     if (exists) {
       return
@@ -313,7 +321,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       return false
     }
 
-    log("response.resources", response && response.resources)
+    logJson("response.resources", response && response.resources)
     if (!response.resources) {
       return false
     }
