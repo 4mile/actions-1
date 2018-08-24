@@ -26,19 +26,15 @@ const DASHBOARD_RENDER_PARAMS: any = {
 function log(...args: any[]) {
   console.log.apply(console, args)
 }
-function logJson(...args: any[]) {
-  const items = args.map((arg: any) => {
-    if (typeof arg === "object") {
-      return JSON.stringify(arg, null, 2)
-    }
-    return arg
-  })
-  log(items)
-}
-/*
-NOTES:
-
-*/
+// function logJson(...args: any[]) {
+//   const items = args.map((arg: any) => {
+//     if (typeof arg === "object") {
+//       return JSON.stringify(arg, null, 2)
+//     }
+//     return arg
+//   })
+//   log(items)
+// }
 
 export interface Catalog {
   guid: string,
@@ -248,6 +244,8 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async addAssetType(transaction: Transaction) {
+    log("addAssetType")
+
     const exists = await this.checkIfAssetTypeExists(transaction)
     log("exists", exists)
     if (exists) {
@@ -300,6 +298,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
   }
 
   async checkIfAssetTypeExists(transaction: Transaction) {
+    log("checkIfAssetTypeExists")
 
     const { assetType } = transaction
 
@@ -321,12 +320,15 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       return false
     }
 
-    logJson("response.resources", response && response.resources)
+    log("response.resources", response && response.resources)
     if (!response.resources) {
       return false
     }
 
-    const exists = response.resources.some((resource: any) => resource.name === assetType)
+    const exists = response.resources.some((resource: any, i: number) => {
+      log(i, resource.name, assetType, resource.name === assetType)
+      return resource.name === assetType
+    })
     return exists
 
   }
