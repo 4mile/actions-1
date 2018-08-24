@@ -5,7 +5,7 @@ import * as reqPromise from "request-promise-native"
 import * as stream from "stream"
 import * as url from "url"
 import * as Hub from "../../hub"
-// const fileType = require("file-type")
+const fileType = require("file-type")
 
 // convert to env vars?
 const IBM_BEARER_TOKEN_API = "https://iam.ng.bluemix.net/identity/token"
@@ -148,28 +148,28 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     // ensure that this catalog has the needed asset type defined
     await this.addAssetType(transaction)
 
-    // // POST asset with metadata
-    // const assetId = await this.postAsset(transaction)
-    // log("assetId:", assetId)
+    // POST asset with metadata
+    const assetId = await this.postAsset(transaction)
+    log("assetId:", assetId)
 
-    // // set data_asset attribute on the posted asset
-    // await this.postAssetAttribute(assetId, transaction)
+    // set data_asset attribute on the posted asset
+    await this.postAssetAttribute(assetId, transaction)
 
-    // // get bucket for this catalog - using first one for now
-    // const bucket = await this.getBucket(transaction)
-    // log("bucket:", bucket)
+    // get bucket for this catalog - using first one for now
+    const bucket = await this.getBucket(transaction)
+    log("bucket:", bucket)
 
-    // // get PNG from looker API
-    // const buffer = await this.getLookerPngBuffer(transaction)
-    // log("buffer file type:", fileType(buffer))
-    // log("buffer length:", buffer.length)
+    // get PNG from looker API
+    const buffer = await this.getLookerPngBuffer(transaction)
+    log("buffer file type:", fileType(buffer))
+    log("buffer length:", buffer.length)
 
-    // // upload PNG to IBM Cloud Object Storage (COS), get file_name
-    // const fileName = await this.uploadPngToIbmCos(bucket, buffer, transaction)
-    // log("fileName:", fileName)
+    // upload PNG to IBM Cloud Object Storage (COS), get file_name
+    const fileName = await this.uploadPngToIbmCos(bucket, buffer, transaction)
+    log("fileName:", fileName)
 
-    // // add attachment to the asset, pointing to PNG in COS
-    // await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
+    // add attachment to the asset, pointing to PNG in COS
+    await this.postAttachmentToAsset(assetId, bucket, fileName, transaction)
 
     // just sending an empty response
     return new Hub.ActionResponse()
