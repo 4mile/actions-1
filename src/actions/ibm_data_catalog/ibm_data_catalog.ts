@@ -10,7 +10,7 @@ const fileType = require("file-type")
 // convert to env vars?
 const IBM_BEARER_TOKEN_API = "https://iam.ng.bluemix.net/identity/token"
 const IBM_DATA_CATALOG_API = "https://api.dataplatform.cloud.ibm.com/v2"
-const IBM_CLOUD_OBJECT_STORAGE_API = "https://s3-api.us-geo.objectstorage.softlayer.net"
+const IBM_CLOUD_OBJECT_STORAGE_API = "https://s3-api.us-south.objectstorage.softlayer.net"
 const CHECK_RENDER_MAX_ATTEMPTS = 100
 const CHECK_RENDER_INTERVAL = 5000
 
@@ -189,7 +189,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       throw "Missing catalogId."
     }
 
-    const type = this.getRequestType(request)
+    const type: Hub.ActionType = request.type
     if (!type) {
       throw "Unable to determine request type."
     }
@@ -221,17 +221,6 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     }
 
     return transaction
-  }
-
-  getRequestType(request: Hub.ActionRequest) {
-    // for now using scheduledPlan.type
-    // because request.type is always 'query'
-    switch (request.scheduledPlan!.type) {
-      case "Look":
-        return Hub.ActionType.Query
-      case "Dashboard":
-        return Hub.ActionType.Dashboard
-    }
   }
 
   getAssetType(type: Hub.ActionType) {
