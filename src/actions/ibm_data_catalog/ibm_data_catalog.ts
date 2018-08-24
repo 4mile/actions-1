@@ -142,7 +142,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
     */
 
     // ensure that this catalog has the needed asset type defined
-    // await this.addAssetType(transaction)
+    await this.addAssetType(transaction)
 
     // POST asset with metadata
     const assetId = await this.postAsset(transaction)
@@ -241,6 +241,7 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
 
   async addAssetType(transaction: Transaction) {
     const exists = this.checkIfAssetTypeExists(transaction)
+    log("exists", exists)
     if (exists) {
       return
     }
@@ -304,7 +305,15 @@ export class IbmDataCatalogAssetAction extends Hub.Action {
       json: true,
     }
 
-    const response = await reqPromise(options)
+    let response
+    try {
+      response = await reqPromise(options)
+    } catch (error) {
+      log("catch", error)
+      return false
+    }
+
+    log("response.resources", response && response.resources)
     if (!response.resources) {
       return false
     }
