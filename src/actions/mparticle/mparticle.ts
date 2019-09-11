@@ -1,3 +1,4 @@
+import * as winston from "winston"
 import * as semver from "semver"
 import * as Hub from "../../hub"
 
@@ -34,7 +35,9 @@ export class MparticleAction extends Hub.Action {
   }
 
   async execute(request: Hub.ActionRequest) {
-    throw 'here we are'
+    winston.debug('###################debug statement')
+    throw '############here we are'
+    return '###########helo'
   }
 
   async form() {
@@ -47,7 +50,6 @@ export class MparticleAction extends Hub.Action {
     }]
     return form
   }
-
 }
 
 Hub.addAction(new MparticleAction())
