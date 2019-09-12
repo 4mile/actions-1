@@ -34,8 +34,8 @@ export class MparticleAction extends Hub.Action {
     }
   }
 
-  async execute() {
-    winston.debug("###################debug statement")
+  async execute(request: Hub.ActionRequest) {
+    winston.debug(request)
     throw "############here we are"
     return new Hub.ActionResponse()
   }
