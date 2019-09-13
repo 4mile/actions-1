@@ -76,27 +76,28 @@ export class MparticleAction extends Hub.Action {
       .from(`${request.params.apiKey}:${request.params.apiSecret}`)
       .toString('base64')
 
-    const body = [
-        {
-            "events" : [
-                {
-                    "data" : {
-                    	"event_name": "jj_test_app_event"
-                    },
-                    "event_type" : "custom_event"
-                }
-            ],
-            "device_info" : {},
-            "user_attributes" : {},
-            "deleted_user_attributes" : [],
-            "user_identities" : {
-              "customerid": "1234"
-            },
-            "application_info" : {},
-            "schema_version": 2,
-            "environment": "development"
-        }
-    ]
+    const body: any[] = []
+    //   {
+    //     events: [
+    //       {
+    //         data: {
+    //         	event_name: "jj_test_app_event",
+    //         },
+    //         event_type: "custom_event",
+    //       }
+    //     ],
+    //     device_info: {},
+    //     user_attributes: {},
+    //     deleted_user_attributes: [],
+    //     user_identities: {
+    //       customerid: "1234",
+    //     },
+    //     application_info : {},
+    //     schema_version: 2,
+    //     environment: "development",
+    //   }
+    // ]
+    let rows: Hub.JsonDetail.Row[] = []
 
     const errors: Error[] = []
 
@@ -110,6 +111,7 @@ export class MparticleAction extends Hub.Action {
           // presumably the row(s)?
           // const payload = {
           // }
+          rows.push(row)
           try {
             // presumably store as body
             winston.debug(JSON.stringify(row))
@@ -130,6 +132,28 @@ export class MparticleAction extends Hub.Action {
     } catch (e) {
       errors.push(e)
     }
+    rows.forEach((row) => {
+      let entry = {
+        events: [
+          {
+            data: {
+              event_name: "jj_test_app_event",
+            },
+            event_type: "custom_event",
+          }
+        ],
+        device_info: {},
+        user_attributes: {},
+        deleted_user_attributes: [],
+        user_identities: {
+          customerid: row["fruit_basket.count"].value,
+        },
+        application_info : {},
+        schema_version: 2,
+        environment: "development",
+      }
+      body.push(entry)
+    })
 
     const options = {
       url: MP_API_URL,
