@@ -155,6 +155,8 @@ export class MparticleAction extends Hub.Action {
       body.push(entry)
     })
 
+    winston.debug(JSON.stringify(body))
+
     const options = {
       url: MP_API_URL,
       headers: {
