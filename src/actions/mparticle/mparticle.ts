@@ -5,6 +5,10 @@ import * as Hub from "../../hub"
 import * as httpRequest from "request-promise-native"
 
 const MP_API_URL = "https://s2s.mparticle.com/v2/bulkevents/"
+const EVENT_NAME = "jj_test_app_event"
+const EVENT_TYPE = "custom_event"
+const ENVIRONMENT = "development"
+
 
 export enum MparticleUserTags {
   MpCustomerId = "mp_customer_id",
@@ -78,30 +82,8 @@ export class MparticleAction extends Hub.Action {
       .toString('base64')
 
     const body: any[] = []
-    //   {
-    //     events: [
-    //       {
-    //         data: {
-    //         	event_name: "jj_test_app_event",
-    //         },
-    //         event_type: "custom_event",
-    //       }
-    //     ],
-    //     device_info: {},
-    //     user_attributes: {},
-    //     deleted_user_attributes: [],
-    //     user_identities: {
-    //       customerid: "1234",
-    //     },
-    //     application_info : {},
-    //     schema_version: 2,
-    //     environment: "development",
-    //   }
-    // ]
-    let rows: Hub.JsonDetail.Row[] = []
-
     const errors: Error[] = []
-
+    let rows: Hub.JsonDetail.Row[] = []
     let mappings: any
 
     try {
@@ -109,16 +91,10 @@ export class MparticleAction extends Hub.Action {
       await request.streamJsonDetail({
         onFields: (fields) => {
           mappings = this.createMappingFromFields(fields)
-          // winston.debug('MAPPING', JSON.stringify(mappings))
         },
         onRow: (row) => {
-          // presumably the row(s)?
-          // const payload = {
-          // }
-          rows.push(row)
           try {
-            // presumably store as body
-            winston.debug('ROW', JSON.stringify(row))
+            rows.push(row)
           } catch (e) {
             errors.push(e)
           }
@@ -138,43 +114,32 @@ export class MparticleAction extends Hub.Action {
     }
     rows.forEach((row) => {
       const userIdentities: any = {}
-      winston.debug('USER IDENTITIES', JSON.stringify(mappings.userIdentities))
       Object.keys(mappings.userIdentities).forEach((ua: any) => {
         const key = mappings.userIdentities[ua]
         const val = row[ua].value
-        winston.debug('UI', key, val)
         userIdentities[key] = val
       })
 
       const userAttributes: any = {}
-      winston.debug('USER ATTRIBUTES', JSON.stringify(mappings.userAttributes))
       Object.keys(mappings.userAttributes).forEach((ua: any) => {
         const key = mappings.userAttributes[ua]
         const val = row[ua].value
-        winston.debug('UA', key, val)
         userAttributes[key] = val
       })
-      winston.debug(JSON.stringify(userAttributes))
-      winston.debug(JSON.stringify(userIdentities))
 
-      let entry = {
+      let eventEntry = {
         events: [
           {
-            data: {
-              event_name: "jj_test_app_event",
-            },
-            event_type: "custom_event",
+            data: { event_name: EVENT_NAME },
+            event_type: EVENT_TYPE,
           }
         ],
-        device_info: {},
         user_attributes: userAttributes,
-        deleted_user_attributes: [],
         user_identities: userIdentities,
-        application_info : {},
         schema_version: 2,
-        environment: "development",
+        environment: ENVIRONMENT,
       }
-      body.push(entry)
+      body.push(eventEntry)
     })
 
     winston.debug('MAPPINGS', JSON.stringify(mappings))
@@ -198,18 +163,13 @@ export class MparticleAction extends Hub.Action {
     }
   }
 
-  // I don't think we have any.
   async form() {
     const form = new Hub.ActionForm()
     form.fields = []
     return form
   }
 
-  protected createMappingFromFields(fields: any) {
-    const mapping: any = {
-      userIdentities: {},
-      userAttributes: {},
-    }
+  protected mapObject(obj: any, field: any) {
     const userIdentities: any = {
       mp_customer_id: 'customerid',
       mp_email: 'email',
@@ -224,49 +184,33 @@ export class MparticleAction extends Hub.Action {
       mp_other4: 'other4',
     }
 
-    fields.measures.forEach((m: any) => {
-      if (m.tags) {
-        const tag = m.tags[0]
-        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
-          mapping.userIdentities[m.name] = userIdentities[tag]
-        } else {
-          // Custom
-          mapping.userAttributes[m.name] = `looker_${m.name}`
-        }
+    if (field.tags) {
+      const tag = field.tags[0]
+      if (Object.keys(userIdentities).indexOf(tag) !== -1) {
+        obj.userIdentities[field.name] = userIdentities[tag]
+      } else {
+        obj.userAttributes[field.name] = `looker_${field.name}`
       }
+    }
+  }
+
+  protected createMappingFromFields(fields: any) {
+    const mapping: any = {
+      userIdentities: {},
+      userAttributes: {},
+    }
+
+    fields.measures.forEach((m: any) => {
+      this.mapObject(mapping, m)
     })
     fields.dimensions.forEach((d: any) => {
-      if (d.tags) {
-        const tag = d.tags[0]
-        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
-          mapping.userIdentities[d.name] = userIdentities[tag] as string
-        } else {
-          // Custom
-          mapping.userAttributes[d.name] = `looker_${d.name}` as string
-        }
-      }
+      this.mapObject(mapping, d)
     })
     return mapping
   }
 }
 
 Hub.addAction(new MparticleAction())
-
-
-// "user_identities": {
-//   "customerid",
-//   "email",
-//   "facebook",
-//   "google",
-//   "microsoft",
-//   "twitter",
-//   "yahoo",
-//   "other",
-//   "other2",
-//   "other3",
-//   "other4",
-//   "looker_<name_of_dimension>"
-// }
 
 // "event_name": "custom_event_name",
 // "data": {
@@ -286,10 +230,3 @@ Hub.addAction(new MparticleAction())
 // // httpRequest.post => from datarobot.ts
 // 4) report errors, if any
 // 5) return Hub.ActionResponse
-
-
-// 2*) crafting JSON body:
-// whitelisted keys only,
-// determine user or event
-// map names
-// put into body
