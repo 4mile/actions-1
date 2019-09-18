@@ -37,9 +37,6 @@ export enum MparticleEventTags {
 
 export class MparticleAction extends Hub.Action {
 
-  // I wonder if I can do something like:
-  // allowedTags = [...MparticleUserTags, ...MparticleEventTags]
-
   name = "mparticle"
   label = "Mparticle"
   iconName = "mparticle/mparticle.svg"
@@ -113,32 +110,7 @@ export class MparticleAction extends Hub.Action {
       errors.push(e)
     }
     rows.forEach((row) => {
-      const userIdentities: any = {}
-      Object.keys(mappings.userIdentities).forEach((ua: any) => {
-        const key = mappings.userIdentities[ua]
-        const val = row[ua].value
-        userIdentities[key] = val
-      })
-
-      const userAttributes: any = {}
-      Object.keys(mappings.userAttributes).forEach((ua: any) => {
-        const key = mappings.userAttributes[ua]
-        const val = row[ua].value
-        userAttributes[key] = val
-      })
-
-      let eventEntry = {
-        events: [
-          {
-            data: { event_name: EVENT_NAME },
-            event_type: EVENT_TYPE,
-          }
-        ],
-        user_attributes: userAttributes,
-        user_identities: userIdentities,
-        schema_version: 2,
-        environment: ENVIRONMENT,
-      }
+      const eventEntry = this.createEvent(row, mappings)
       body.push(eventEntry)
     })
 
@@ -167,6 +139,36 @@ export class MparticleAction extends Hub.Action {
     const form = new Hub.ActionForm()
     form.fields = []
     return form
+  }
+
+  protected createEvent(row: any, mappings: any) {
+
+    const userIdentities: any = {}
+    Object.keys(mappings.userIdentities).forEach((ua: any) => {
+      const key = mappings.userIdentities[ua]
+      const val = row[ua].value
+      userIdentities[key] = val
+    })
+
+    const userAttributes: any = {}
+    Object.keys(mappings.userAttributes).forEach((ua: any) => {
+      const key = mappings.userAttributes[ua]
+      const val = row[ua].value
+      userAttributes[key] = val
+    })
+
+    return {
+      events: [
+        {
+          data: { event_name: EVENT_NAME },
+          event_type: EVENT_TYPE,
+        }
+      ],
+      user_attributes: userAttributes,
+      user_identities: userIdentities,
+      schema_version: 2,
+      environment: ENVIRONMENT,
+    }
   }
 
   protected mapObject(obj: any, field: any) {
