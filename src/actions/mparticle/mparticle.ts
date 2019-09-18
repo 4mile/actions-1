@@ -102,12 +102,14 @@ export class MparticleAction extends Hub.Action {
 
     const errors: Error[] = []
 
+    let mappings: any
+
     try {
 
       await request.streamJsonDetail({
         onFields: (fields) => {
-          this.createMappingFromFields(fields)
-          winston.debug('FIELDS', JSON.stringify(fields))
+          mappings = this.createMappingFromFields(fields)
+          // winston.debug('MAPPING', JSON.stringify(mappings))
         },
         onRow: (row) => {
           // presumably the row(s)?
@@ -157,6 +159,7 @@ export class MparticleAction extends Hub.Action {
       body.push(entry)
     })
 
+    winston.debug('MAPPINGS', JSON.stringify(mappings))
     winston.debug('BODY', JSON.stringify(body))
 
     const options = {
@@ -185,13 +188,47 @@ export class MparticleAction extends Hub.Action {
   }
 
   protected createMappingFromFields(fields: any) {
-    fields.measures.forEach((m:any) => {
-      winston.debug('NAME', m.name)
+    const mapping: any = {
+      userIdentities: {},
+      userAttribute: {},
+    }
+    const userIdentities: any = {
+      mp_customer_id: 'customerid',
+      mp_email: 'email',
+      mp_facebook: 'facebook',
+      mp_google: 'google',
+      mp_microsoft: 'microsoft',
+      mp_twitter: 'twitter',
+      mp_yahoo: 'yahoo',
+      mp_other: 'other',
+      mp_other2: 'other2',
+      mp_other3: 'other3',
+      mp_other4: 'other4',
+    }
+
+    fields.measures.forEach((m: any) => {
+      if (m.tags) {
+        const tag = m.tags[0]
+        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
+          mapping.userIdentities[m.name] = userIdentities[tag]
+        } else {
+          // Custom
+          mapping.userAttribute[m.name] = `looker_${m.name}`
+        }
+      }
     })
-    // const mapping = {}
-    // fields.forEach(field => {
-    //   winston.debug('NAME', field.name)
-    // })
+    fields.dimensions.forEach((d: any) => {
+      if (d.tags) {
+        const tag = d.tags[0]
+        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
+          mapping.userIdentities[d.name] = userIdentities[tag] as string
+        } else {
+          // Custom
+          mapping.userAttribute[d.name] = `looker_${d.name}` as string
+        }
+      }
+    })
+    return mapping
   }
 }
 
