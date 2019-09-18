@@ -221,7 +221,7 @@ export class MparticleAction extends Hub.Action {
     fields.measures.forEach((m: any) => {
       if (m.tags) {
         const tag = m.tags[0]
-        if (Object.keys(userIdentities).includes(tag)) {
+        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
           mapping.userIdentities[m.name] = userIdentities[tag]
         } else {
           // Custom
@@ -232,7 +232,7 @@ export class MparticleAction extends Hub.Action {
     fields.dimensions.forEach((d: any) => {
       if (d.tags) {
         const tag = d.tags[0]
-        if (Object.keys(userIdentities).includes(tag)) {
+        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
           mapping.userIdentities[d.name] = userIdentities[tag] as string
         } else {
           // Custom
