@@ -106,6 +106,7 @@ export class MparticleAction extends Hub.Action {
 
       await request.streamJsonDetail({
         onFields: (fields) => {
+          this.createMappingFromFields(fields)
           winston.debug('FIELDS', JSON.stringify(fields))
         },
         onRow: (row) => {
@@ -181,6 +182,13 @@ export class MparticleAction extends Hub.Action {
     const form = new Hub.ActionForm()
     form.fields = []
     return form
+  }
+
+  protected createMappingFromFields(fields: Hub.Field[]) {
+    const mapping = {}
+    fields.forEach(field => {
+      winston.debug('NAME', field.name)
+    })
   }
 }
 
