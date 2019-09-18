@@ -71,6 +71,7 @@ export class MparticleAction extends Hub.Action {
   }
 
   async execute(request: Hub.ActionRequest) {
+    winston.debug('REQUEST', JSON.stringify(request))
 
     const auth = Buffer
       .from(`${request.params.apiKey}:${request.params.apiSecret}`)
@@ -105,7 +106,7 @@ export class MparticleAction extends Hub.Action {
 
       await request.streamJsonDetail({
         onFields: (fields) => {
-          winston.debug(JSON.stringify(fields))
+          winston.debug('FIELDS', JSON.stringify(fields))
         },
         onRow: (row) => {
           // presumably the row(s)?
@@ -114,7 +115,7 @@ export class MparticleAction extends Hub.Action {
           rows.push(row)
           try {
             // presumably store as body
-            winston.debug(JSON.stringify(row))
+            winston.debug('ROW', JSON.stringify(row))
           } catch (e) {
             errors.push(e)
           }
@@ -155,7 +156,7 @@ export class MparticleAction extends Hub.Action {
       body.push(entry)
     })
 
-    winston.debug(JSON.stringify(body))
+    winston.debug('BODY', JSON.stringify(body))
 
     const options = {
       url: MP_API_URL,
