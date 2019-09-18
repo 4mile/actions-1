@@ -185,7 +185,7 @@ export class MparticleAction extends Hub.Action {
   }
 
   protected createMappingFromFields(fields: any) {
-    fields.measures.forEach(m => {
+    fields.measures.forEach((m:any) => {
       winston.debug('NAME', m.name)
     })
     // const mapping = {}
