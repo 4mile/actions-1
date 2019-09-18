@@ -141,6 +141,7 @@ export class MparticleAction extends Hub.Action {
       Object.keys(mappings.userIdentities).forEach((ua: any) => {
         const key = mappings.userIdentities[ua]
         const val = row[ua].value
+        winston.debug(key, val)
         userIdentities[key] = val
       })
 
@@ -148,8 +149,11 @@ export class MparticleAction extends Hub.Action {
       Object.keys(mappings.userAttributes).forEach((ua: any) => {
         const key = mappings.userAttributes[ua]
         const val = row[ua].value
+        winston.debug(key, val)
         userAttributes[key] = val
       })
+      winston.debug(JSON.stringify(userAttributes))
+      winston.debug(JSON.stringify(userIdentities))
 
       let entry = {
         events: [
