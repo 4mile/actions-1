@@ -208,7 +208,7 @@ export class MparticleAction extends Hub.Action {
   protected createMappingFromFields(fields: any) {
     const mapping: any = {
       userIdentities: {},
-      userAttribute: {},
+      userAttributes: {},
     }
     const userIdentities: any = {
       mp_customer_id: 'customerid',
@@ -231,7 +231,7 @@ export class MparticleAction extends Hub.Action {
           mapping.userIdentities[m.name] = userIdentities[tag]
         } else {
           // Custom
-          mapping.userAttribute[m.name] = `looker_${m.name}`
+          mapping.userAttributes[m.name] = `looker_${m.name}`
         }
       }
     })
@@ -242,7 +242,7 @@ export class MparticleAction extends Hub.Action {
           mapping.userIdentities[d.name] = userIdentities[tag] as string
         } else {
           // Custom
-          mapping.userAttribute[d.name] = `looker_${d.name}` as string
+          mapping.userAttributes[d.name] = `looker_${d.name}` as string
         }
       }
     })
