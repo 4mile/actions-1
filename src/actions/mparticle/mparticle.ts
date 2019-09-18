@@ -137,6 +137,20 @@ export class MparticleAction extends Hub.Action {
       errors.push(e)
     }
     rows.forEach((row) => {
+      const userIdentities: any = {}
+      Object.keys(mappings.userIdentities).forEach((ua: any) => {
+        const key = mappings.userIdentities[ua]
+        const val = row[ua].value
+        userIdentities[key] = val
+      })
+
+      const userAttributes: any = {}
+      Object.keys(mappings.userAttributes).forEach((ua: any) => {
+        const key = mappings.userAttributes[ua]
+        const val = row[ua].value
+        userAttributes[key] = val
+      })
+
       let entry = {
         events: [
           {
@@ -147,11 +161,9 @@ export class MparticleAction extends Hub.Action {
           }
         ],
         device_info: {},
-        user_attributes: {},
+        user_attributes: userAttributes,
         deleted_user_attributes: [],
-        user_identities: {
-          customerid: row["fruit_basket.count"].value,
-        },
+        user_identities: userIdentities,
         application_info : {},
         schema_version: 2,
         environment: "development",
@@ -209,7 +221,7 @@ export class MparticleAction extends Hub.Action {
     fields.measures.forEach((m: any) => {
       if (m.tags) {
         const tag = m.tags[0]
-        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
+        if (Object.keys(userIdentities).includes(tag)) {
           mapping.userIdentities[m.name] = userIdentities[tag]
         } else {
           // Custom
@@ -220,7 +232,7 @@ export class MparticleAction extends Hub.Action {
     fields.dimensions.forEach((d: any) => {
       if (d.tags) {
         const tag = d.tags[0]
-        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
+        if (Object.keys(userIdentities).includes(tag)) {
           mapping.userIdentities[d.name] = userIdentities[tag] as string
         } else {
           // Custom
