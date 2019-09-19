@@ -148,9 +148,8 @@ export class MparticleAction extends Hub.Action {
     const userAttributes: any = {}
     const data: any = {
       event_name: EVENT_NAME,
-      device_info: {},
-      custom_attributes: {},
     }
+
     if (eventType === 'user') {
       Object.keys(mappings.userIdentities).forEach((ua: any) => {
         const key = mappings.userIdentities[ua]
@@ -164,6 +163,8 @@ export class MparticleAction extends Hub.Action {
         userAttributes[key] = val
       })
     } else {
+      data.device_info = {}
+      data.custom_attributes = {}
       if (mappings.eventName) {
         Object.keys(mappings.eventName).forEach((en: any) => {
           data.event_name = row[en].value
@@ -263,17 +264,15 @@ export class MparticleAction extends Hub.Action {
       mp_session_uuid: 'session_uuid',
     }
 
-    if (eventType === 'user') {
-      if (field.tags.length > 0) {
+    if (field.tags.length > 0) {
+      if (eventType === 'user') {
         const tag = field.tags[0]
         if (Object.keys(userIdentities).indexOf(tag) !== -1) {
           obj.userIdentities[field.name] = userIdentities[tag]
         } else {
           obj.userAttributes[field.name] = `looker_${field.name}`
         }
-      }
-    } else {
-      if (field.tags.length > 0) {
+      } else {
         const tag = field.tags[0]
         if (tag === 'mp_event_name') {
           obj.eventName[field.name] = 'event_name'
