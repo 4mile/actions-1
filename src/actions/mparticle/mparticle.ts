@@ -116,7 +116,7 @@ export class MparticleAction extends Hub.Action {
     winston.debug('BODY', JSON.stringify(body))
 
     const { apiKey, apiSecret } = request.params
-    const options = postOptions(apiKey, apiSecret, body)
+    const options = this.postOptions(apiKey, apiSecret, body)
 
     try {
       await httpRequest.post(options).promise()
@@ -287,7 +287,7 @@ export class MparticleAction extends Hub.Action {
     }
   }
 
-  protected postOptions(apiKey: string, apiSecret: string, body: any) {
+  protected postOptions(apiKey: string | undefined, apiSecret: string | undefined, body: any) {
     const auth = Buffer
       .from(`${apiKey}:${apiSecret}`)
       .toString('base64')
