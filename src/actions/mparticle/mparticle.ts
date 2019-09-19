@@ -112,6 +112,7 @@ export class MparticleAction extends Hub.Action {
     } catch (e) {
       errors.push(e)
     }
+    winston.debug('about to make events')
     rows.forEach((row) => {
       const eventEntry = this.createEvent(row, mappings, eventType)
       body.push(eventEntry)
@@ -243,6 +244,7 @@ export class MparticleAction extends Hub.Action {
         }
       }
     } else {
+      winston.debug('map object')
       obj.eventName = {}
       obj.deviceInfo = {}
       obj.dataEventAttributes = {}
@@ -293,6 +295,7 @@ export class MparticleAction extends Hub.Action {
       mapping = {}
     }
 
+    winston.debug('about to map objects from all fields')
     fields.measures.forEach((m: any) => {
       this.mapObject(mapping, m, eventType)
     })
