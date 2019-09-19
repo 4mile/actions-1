@@ -72,7 +72,6 @@ export class MparticleAction extends Hub.Action {
   }
 
   async execute(request: Hub.ActionRequest) {
-    winston.debug('REQUEST', JSON.stringify(request))
 
     const auth = Buffer
       .from(`${request.params.apiKey}:${request.params.apiSecret}`)
@@ -111,8 +110,6 @@ export class MparticleAction extends Hub.Action {
     } catch (e) {
       errors.push(e)
     }
-    winston.debug('MMMMMM', JSON.stringify(mappings))
-    winston.debug('about to make events')
     rows.forEach((row) => {
       const eventEntry = this.createEvent(row, mappings, eventType)
       body.push(eventEntry)
@@ -251,7 +248,6 @@ export class MparticleAction extends Hub.Action {
     fields.dimensions.forEach((d: any) => {
       this.mapObject(mapping, d, eventType)
     })
-    winston.debug('MADE MAPPING', JSON.stringify(mapping))
     return mapping
   }
 
@@ -279,7 +275,6 @@ export class MparticleAction extends Hub.Action {
     } else {
       if (field.tags.length > 0) {
         const tag = field.tags[0]
-        winston.debug('TAG', tag)
         if (tag === 'mp_event_name') {
           obj.eventName[field.name] = 'event_name'
         } else if (tag === 'mp_device_info') {
@@ -289,7 +284,6 @@ export class MparticleAction extends Hub.Action {
         } else {
           obj.customAttributes[field.name] = `looker_${field.name}`
         }
-        winston.debug('OBJ', JSON.stringify(obj))
       }
     }
   }
