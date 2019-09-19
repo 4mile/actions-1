@@ -144,51 +144,50 @@ export class MparticleAction extends Hub.Action {
   }
 
   protected createEvent(row: any, mappings: any, eventType: string) {
-
-    const userIdentities: any = {}
-    const userAttributes: any = {}
+    const eventUserIdentities: any = {}
+    const eventUserAttributes: any = {}
     const data: any = {
       event_name: EVENT_NAME,
     }
 
     if (eventType === USER) {
-      Object.keys(mappings.userIdentities).forEach((ua: any) => {
-        const key = mappings.userIdentities[ua]
-        const val = row[ua].value
-        userIdentities[key] = val
+      Object.keys(mappings.userIdentities).forEach((attr: any) => {
+        const key = mappings.userIdentities[attr]
+        const val = row[attr].value
+        eventUserIdentities[key] = val
       })
 
-      Object.keys(mappings.userAttributes).forEach((ua: any) => {
-        const key = mappings.userAttributes[ua]
-        const val = row[ua].value
-        userAttributes[key] = val
+      Object.keys(mappings.userAttributes).forEach((attr: any) => {
+        const key = mappings.userAttributes[attr]
+        const val = row[attr].value
+        eventUserAttributes[key] = val
       })
     } else {
       data.device_info = {}
       data.custom_attributes = {}
       if (mappings.eventName) {
-        Object.keys(mappings.eventName).forEach((en: any) => {
-          data.event_name = row[en].value
+        Object.keys(mappings.eventName).forEach((attr: any) => {
+          data.event_name = row[attr].value
         })
       }
       if (mappings.deviceInfo) {
-        Object.keys(mappings.deviceInfo).forEach((di: any) => {
-          const key = mappings.deviceInfo[di]
-          const val = row[di].value
+        Object.keys(mappings.deviceInfo).forEach((attr: any) => {
+          const key = mappings.deviceInfo[attr]
+          const val = row[attr].value
           data.device_info[key] = val
         })
       }
       if (mappings.dataEventAttributes) {
-        Object.keys(mappings.dataEventAttributes).forEach((ea: any) => {
-          const key = mappings.dataEventAttributes[ea]
-          const val = row[ea].value
+        Object.keys(mappings.dataEventAttributes).forEach((attr: any) => {
+          const key = mappings.dataEventAttributes[attr]
+          const val = row[attr].value
           data[key] = val
         })
       }
       if (mappings.customAttributes) {
-        Object.keys(mappings.customAttributes).forEach((ca: any) => {
-          const key = mappings.customAttributes[ca]
-          const val = row[ca].value
+        Object.keys(mappings.customAttributes).forEach((attr: any) => {
+          const key = mappings.customAttributes[attr]
+          const val = row[attr].value
           data.custom_attributes[key] = val
         })
       }
@@ -201,8 +200,8 @@ export class MparticleAction extends Hub.Action {
           event_type: EVENT_TYPE,
         }
       ],
-      user_attributes: userAttributes,
-      user_identities: userIdentities,
+      user_attributes: eventUserAttributes,
+      user_identities: eventUserIdentities,
       schema_version: 2,
       environment: ENVIRONMENT,
     }
