@@ -89,7 +89,6 @@ export class MparticleAction extends Hub.Action {
       await request.streamJsonDetail({
         onFields: (fields) => {
           eventType = this.setEventType(fields)
-          winston.debug('EVENT TYPE', eventType)
           mappings = this.createMappingFromFields(fields, eventType)
         },
         onRow: (row) => {
@@ -210,33 +209,66 @@ export class MparticleAction extends Hub.Action {
     }
   }
 
+  protected setEventType(fields: any) {
+    const userIdentities: any = [
+      "mp_customer_id", "mp_email",
+      "mp_facebook", "mp_google",
+      "mp_microsoft", "mp_twitter",
+      "mp_yahoo", "mp_other",
+      "mp_other2", "mp_other3",
+      "mp_other4",
+    ]
+
+    const measures = fields.measures.some((field: any) => {
+      return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
+    })
+    const dims = fields.dimensions.some((field: any) => {
+      return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
+    })
+    return measures || dims ? 'user' : 'event'
+  }
+
+  // Sets up the map object and loops over all fields.
+  protected createMappingFromFields(fields: any, eventType: string) {
+    let mapping: any
+    if (eventType === 'user') {
+      mapping = {
+        userIdentities: {},
+        userAttributes: {},
+      }
+    } else {
+      mapping = {
+        eventName: {},
+        deviceInfo: {},
+        dataEventAttributes: {},
+        customAttributes: {},
+      }
+    }
+
+    fields.measures.forEach((m: any) => {
+      this.mapObject(mapping, m, eventType)
+    })
+    fields.dimensions.forEach((d: any) => {
+      this.mapObject(mapping, d, eventType)
+    })
+    winston.debug('MADE MAPPING', JSON.stringify(mapping))
+    return mapping
+  }
+
   protected mapObject(obj: any, field: any, eventType: string) {
     const userIdentities: any = {
-      mp_customer_id: 'customerid',
-      mp_email: 'email',
-      mp_facebook: 'facebook',
-      mp_google: 'google',
-      mp_microsoft: 'microsoft',
-      mp_twitter: 'twitter',
-      mp_yahoo: 'yahoo',
-      mp_other: 'other',
-      mp_other2: 'other2',
-      mp_other3: 'other3',
-      mp_other4: 'other4',
+      mp_customer_id: 'customerid', mp_email: 'email', mp_facebook: 'facebook', mp_google: 'google',
+      mp_microsoft: 'microsoft', mp_twitter: 'twitter', mp_yahoo: 'yahoo', mp_other: 'other',
+      mp_other2: 'other2', mp_other3: 'other3', mp_other4: 'other4',
     }
-    // maybe keep full list, and then step through the flat structure and put them in the right place?
-    // check for event_name, then device_info, then data ones, then else to custom.
-    // mp_event_name: 'event_name',
     const dataEventAttributes: any = {
-      mp_custom_event_type: 'custom_event_type',
-      mp_event_id: 'event_id',
-      mp_timestamp_unixtime_ms: 'timestamp_unixtime_ms',
-      mp_session_id: 'session_id',
+      mp_custom_event_type: 'custom_event_type', mp_event_id: 'event_id',
+      mp_timestamp_unixtime_ms: 'timestamp_unixtime_ms', mp_session_id: 'session_id',
       mp_session_uuid: 'session_uuid',
     }
 
     if (eventType === 'user') {
-      if (field.tags) {
+      if (field.tags.length > 0) {
         const tag = field.tags[0]
         if (Object.keys(userIdentities).indexOf(tag) !== -1) {
           obj.userIdentities[field.name] = userIdentities[tag]
@@ -258,7 +290,7 @@ export class MparticleAction extends Hub.Action {
           winston.debug('2',JSON.stringify(obj))
           obj.deviceInfo[field.name] = `looker_${field.name}`
           winston.debug('22',JSON.stringify(obj))
-        } else if (dataEventAttributes.indexOf(tag) !== -1) {
+        } else if (Object.keys(dataEventAttributes).indexOf(tag) !== -1) {
           winston.debug('3',JSON.stringify(obj))
           obj.dataEventAttributes[field.name] = dataEventAttributes[tag]
           winston.debug('33',JSON.stringify(obj))
@@ -270,52 +302,6 @@ export class MparticleAction extends Hub.Action {
         winston.debug('OBJ', JSON.stringify(obj))
       }
     }
-  }
-
-  protected setEventType(fields: any) {
-    const userIdentities: any = [
-      "mp_customer_id", "mp_email",
-      "mp_facebook", "mp_google",
-      "mp_microsoft", "mp_twitter",
-      "mp_yahoo", "mp_other",
-      "mp_other2", "mp_other3",
-      "mp_other4",
-    ]
-
-    const measures = fields.measures.some((field: any) => {
-      return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
-    })
-    const dims = fields.dimensions.some((field: any) => {
-      return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
-    })
-    return measures || dims ? 'user' : 'event'
-  }
-
-  protected createMappingFromFields(fields: any, eventType: string) {
-    let mapping: any
-    if (eventType === 'user') {
-      mapping = {
-        userIdentities: {},
-        userAttributes: {},
-      }
-    } else {
-      mapping = {
-        eventName: {},
-        deviceInfo: {},
-        dataEventAttributes: {},
-        customAttributes: {},
-      }
-    }
-
-    winston.debug('about to map objects from all fields')
-    fields.measures.forEach((m: any) => {
-      this.mapObject(mapping, m, eventType)
-    })
-    fields.dimensions.forEach((d: any) => {
-      this.mapObject(mapping, d, eventType)
-    })
-    winston.debug('MADE MAPPING', JSON.stringify(mapping))
-    return mapping
   }
 }
 
