@@ -8,7 +8,8 @@ const MP_API_URL = "https://s2s.mparticle.com/v2/bulkevents/"
 const EVENT_NAME = "jj_test_app_event"
 const EVENT_TYPE = "custom_event"
 const ENVIRONMENT = "development"
-
+const USER = "user"
+const EVENT = "event"
 
 export enum MparticleUserTags {
   MpCustomerId = "mp_customer_id",
@@ -81,7 +82,7 @@ export class MparticleAction extends Hub.Action {
     const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
     let mappings: any
-    let eventType: string = 'user'
+    let eventType: string
 
     try {
 
@@ -150,7 +151,7 @@ export class MparticleAction extends Hub.Action {
       event_name: EVENT_NAME,
     }
 
-    if (eventType === 'user') {
+    if (eventType === USER) {
       Object.keys(mappings.userIdentities).forEach((ua: any) => {
         const key = mappings.userIdentities[ua]
         const val = row[ua].value
@@ -223,13 +224,13 @@ export class MparticleAction extends Hub.Action {
     const dims = fields.dimensions.some((field: any) => {
       return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
     })
-    return measures || dims ? 'user' : 'event'
+    return measures || dims ? USER : EVENT
   }
 
   // Sets up the map object and loops over all fields.
   protected createMappingFromFields(fields: any, eventType: string) {
     let mapping: any
-    if (eventType === 'user') {
+    if (eventType === USER) {
       mapping = {
         userIdentities: {},
         userAttributes: {},
@@ -254,18 +255,29 @@ export class MparticleAction extends Hub.Action {
 
   protected mapObject(obj: any, field: any, eventType: string) {
     const userIdentities: any = {
-      mp_customer_id: 'customerid', mp_email: 'email', mp_facebook: 'facebook', mp_google: 'google',
-      mp_microsoft: 'microsoft', mp_twitter: 'twitter', mp_yahoo: 'yahoo', mp_other: 'other',
-      mp_other2: 'other2', mp_other3: 'other3', mp_other4: 'other4',
+      mp_customer_id: 'customerid',
+      mp_email: 'email',
+      mp_facebook: 'facebook',
+      mp_google: 'google',
+      mp_microsoft: 'microsoft',
+      mp_twitter: 'twitter',
+      mp_yahoo: 'yahoo',
+      mp_other: 'other',
+      mp_other2: 'other2',
+      mp_other3: 'other3',
+      mp_other4: 'other4',
     }
+
     const dataEventAttributes: any = {
-      mp_custom_event_type: 'custom_event_type', mp_event_id: 'event_id',
-      mp_timestamp_unixtime_ms: 'timestamp_unixtime_ms', mp_session_id: 'session_id',
+      mp_custom_event_type: 'custom_event_type',
+      mp_event_id: 'event_id',
+      mp_timestamp_unixtime_ms: 'timestamp_unixtime_ms',
+      mp_session_id: 'session_id',
       mp_session_uuid: 'session_uuid',
     }
 
     if (field.tags.length > 0) {
-      if (eventType === 'user') {
+      if (eventType === USER) {
         const tag = field.tags[0]
         if (Object.keys(userIdentities).indexOf(tag) !== -1) {
           obj.userIdentities[field.name] = userIdentities[tag]
@@ -289,22 +301,3 @@ export class MparticleAction extends Hub.Action {
 }
 
 Hub.addAction(new MparticleAction())
-
-// "event_name": "custom_event_name",
-// "data": {
-//   "custom_event_type",
-//   "event_id",
-//   "timestamp_unixtime_ms",
-//   "session_id",
-//   "session_uuid",
-//   "device_info.looker_<name_of_dimension>",
-//   "custom_attributes.looker_<name_of_dimension>"
-// }
-
-// 1) receive streaming request from looker
-// // await request.streamJsonDetail
-// 2) use that info to craft a JSON body, and collect api key
-// 3) http post that to mparticle's API
-// // httpRequest.post => from datarobot.ts
-// 4) report errors, if any
-// 5) return Hub.ActionResponse
