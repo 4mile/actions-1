@@ -112,6 +112,7 @@ export class MparticleAction extends Hub.Action {
     } catch (e) {
       errors.push(e)
     }
+    winston.debug('MMMMMM', JSON.stringify(mappings))
     winston.debug('about to make events')
     rows.forEach((row) => {
       const eventEntry = this.createEvent(row, mappings, eventType)
@@ -245,10 +246,6 @@ export class MparticleAction extends Hub.Action {
       }
     } else {
       winston.debug('map object')
-      obj.eventName = {}
-      obj.deviceInfo = {}
-      obj.dataEventAttributes = {}
-      obj.customAttributes = {}
       if (field.tags) {
         const tag = field.tags[0]
         if (tag === 'mp_event_name') {
@@ -292,7 +289,12 @@ export class MparticleAction extends Hub.Action {
         userAttributes: {},
       }
     } else {
-      mapping = {}
+      mapping = {
+        eventName: {},
+        deviceInfo: {},
+        dataEventAttributes: {},
+        customAttributes: {},
+      }
     }
 
     winston.debug('about to map objects from all fields')
