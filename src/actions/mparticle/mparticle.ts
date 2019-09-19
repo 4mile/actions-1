@@ -243,19 +243,19 @@ export class MparticleAction extends Hub.Action {
         }
       }
     } else {
+      obj.eventName = {}
+      obj.deviceInfo = {}
+      obj.dataEventAttributes = {}
+      obj.customAttributes = {}
       if (field.tags) {
         const tag = field.tags[0]
         if (tag === 'mp_event_name') {
-          obj.eventName = obj.eventName || {}
           obj.eventName[field.name] = 'event_name'
         } else if (tag === 'mp_device_info') {
-          obj.deviceInfo = obj.deviceInfo || {}
           obj.deviceInfo[field.name] = `looker_${field.name}`
         } else if (dataEventAttributes.indexOf(tag) !== -1) {
-          obj.dataEventAttributes = obj.dataEventAttributes || {}
           obj.dataEventAttributes[field.name] = dataEventAttributes[tag]
         } else {
-          obj.customAttributes = obj.customAttributes || {}
           obj.customAttributes[field.name] = `looker_${field.name}`
         }
         winston.debug('OBJ', JSON.stringify(obj))
