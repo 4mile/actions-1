@@ -150,7 +150,9 @@ export class MparticleAction extends Hub.Action {
     const userIdentities: any = {}
     const userAttributes: any = {}
     const data: any = {
-      event_name: EVENT_NAME
+      event_name: EVENT_NAME,
+      device_info: {},
+      custom_attributes: {},
     }
     if (eventType === 'user') {
       Object.keys(mappings.userIdentities).forEach((ua: any) => {
@@ -171,7 +173,6 @@ export class MparticleAction extends Hub.Action {
         })
       }
       if (mappings.deviceInfo) {
-        if (!data.device_info) data.device_info = {} as any
         Object.keys(mappings.deviceInfo).forEach((di: any) => {
           const key = mappings.deviceInfo[di]
           const val = row[di].value
@@ -186,7 +187,6 @@ export class MparticleAction extends Hub.Action {
         })
       }
       if (mappings.customAttributes) {
-        if (!data.custom_attributes) data.custom_attributes = {} as any
         Object.keys(mappings.customAttributes).forEach((ca: any) => {
           const key = mappings.customAttributes[ca]
           const val = row[ca].value
@@ -277,27 +277,17 @@ export class MparticleAction extends Hub.Action {
         }
       }
     } else {
-      winston.debug('map object')
-      winston.debug('OBJ pre', JSON.stringify(obj))
       if (field.tags.length > 0) {
-        winston.debug('tags', JSON.stringify(field))
         const tag = field.tags[0]
+        winston.debug('TAG', tag)
         if (tag === 'mp_event_name') {
-          winston.debug('1',JSON.stringify(obj))
           obj.eventName[field.name] = 'event_name'
-          winston.debug('11',JSON.stringify(obj))
         } else if (tag === 'mp_device_info') {
-          winston.debug('2',JSON.stringify(obj))
           obj.deviceInfo[field.name] = `looker_${field.name}`
-          winston.debug('22',JSON.stringify(obj))
         } else if (Object.keys(dataEventAttributes).indexOf(tag) !== -1) {
-          winston.debug('3',JSON.stringify(obj))
           obj.dataEventAttributes[field.name] = dataEventAttributes[tag]
-          winston.debug('33',JSON.stringify(obj))
         } else {
-          winston.debug('4',JSON.stringify(obj))
           obj.customAttributes[field.name] = `looker_${field.name}`
-          winston.debug('44',JSON.stringify(obj))
         }
         winston.debug('OBJ', JSON.stringify(obj))
       }
