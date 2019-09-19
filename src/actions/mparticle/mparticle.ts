@@ -74,10 +74,6 @@ export class MparticleAction extends Hub.Action {
 
   async execute(request: Hub.ActionRequest) {
 
-    const auth = Buffer
-      .from(`${request.params.apiKey}:${request.params.apiSecret}`)
-      .toString('base64')
-
     const body: any[] = []
     const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
@@ -119,15 +115,8 @@ export class MparticleAction extends Hub.Action {
     winston.debug('MAPPINGS', JSON.stringify(mappings))
     winston.debug('BODY', JSON.stringify(body))
 
-    const options = {
-      url: MP_API_URL,
-      headers: {
-        Authorization: `Basic ${auth}`,
-      },
-      body: body,
-      json: true,
-      resolveWithFullResponse: true,
-    }
+    const { apiKey, apiSecret } = request.params
+    const options = postOptions(apiKey, apiSecret, body)
 
     try {
       await httpRequest.post(options).promise()
@@ -295,6 +284,22 @@ export class MparticleAction extends Hub.Action {
           obj.customAttributes[field.name] = `looker_${field.name}`
         }
       }
+    }
+  }
+
+  protected postOptions(apiKey: string, apiSecret: string, body: any) {
+    const auth = Buffer
+      .from(`${apiKey}:${apiSecret}`)
+      .toString('base64')
+
+    return {
+      url: MP_API_URL,
+      headers: {
+        Authorization: `Basic ${auth}`,
+      },
+      body: body,
+      json: true,
+      resolveWithFullResponse: true,
     }
   }
 }
