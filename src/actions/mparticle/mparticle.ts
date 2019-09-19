@@ -246,6 +246,7 @@ export class MparticleAction extends Hub.Action {
       }
     } else {
       winston.debug('map object')
+      winston.debug('OBJ pre', JSON.stringify(obj))
       if (field.tags) {
         const tag = field.tags[0]
         if (tag === 'mp_event_name') {
