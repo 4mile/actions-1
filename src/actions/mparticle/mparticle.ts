@@ -82,12 +82,15 @@ export class MparticleAction extends Hub.Action {
     const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
     let mappings: any
+    let eventType: string
 
     try {
 
       await request.streamJsonDetail({
         onFields: (fields) => {
-          mappings = this.createMappingFromFields(fields)
+          eventType = this.setEventType(fields)
+          winston.debug('EVENT TYPE', eventType)
+          mappings = this.createMappingFromFields(fields, eventType)
         },
         onRow: (row) => {
           try {
@@ -110,7 +113,7 @@ export class MparticleAction extends Hub.Action {
       errors.push(e)
     }
     rows.forEach((row) => {
-      const eventEntry = this.createEvent(row, mappings)
+      const eventEntry = this.createEvent(row, mappings, eventType)
       body.push(eventEntry)
     })
 
@@ -141,26 +144,60 @@ export class MparticleAction extends Hub.Action {
     return form
   }
 
-  protected createEvent(row: any, mappings: any) {
+  protected createEvent(row: any, mappings: any, eventType: string) {
 
     const userIdentities: any = {}
-    Object.keys(mappings.userIdentities).forEach((ua: any) => {
-      const key = mappings.userIdentities[ua]
-      const val = row[ua].value
-      userIdentities[key] = val
-    })
-
     const userAttributes: any = {}
-    Object.keys(mappings.userAttributes).forEach((ua: any) => {
-      const key = mappings.userAttributes[ua]
-      const val = row[ua].value
-      userAttributes[key] = val
-    })
+    const data: any = {
+      event_name: EVENT_NAME
+    }
+    if (eventType === 'user') {
+      Object.keys(mappings.userIdentities).forEach((ua: any) => {
+        const key = mappings.userIdentities[ua]
+        const val = row[ua].value
+        userIdentities[key] = val
+      })
+
+      Object.keys(mappings.userAttributes).forEach((ua: any) => {
+        const key = mappings.userAttributes[ua]
+        const val = row[ua].value
+        userAttributes[key] = val
+      })
+    } else {
+      if (mappings.eventName) {
+        Object.keys(mappings.eventName).forEach((en: any) => {
+          data.event_name = row[en].value
+        })
+      }
+      if (mappings.deviceInfo) {
+        data.device_info = {} as any
+        Object.keys(mappings.deviceInfo).forEach((di: any) => {
+          const key = mappings.deviceInfo[di]
+          const val = row[di].value
+          data.device_info[key] = val
+        })
+      }
+      if (mappings.dataEventAttributes) {
+        Object.keys(mappings.dataEventAttributes).forEach((ea: any) => {
+          const key = mappings.dataEventAttributes[ea]
+          const val = row[ea].value
+          data[key] = val
+        })
+      }
+      if (mappings.customAttributes) {
+        data.custom_attributes = {} as any
+        Object.keys(mappings.customAttributes).forEach((ca: any) => {
+          const key = mappings.customAttributes[ca]
+          const val = row[ca].value
+          data.custom_attributes[key] = val
+        })
+      }
+    }
 
     return {
       events: [
         {
-          data: { event_name: EVENT_NAME },
+          data: data,
           event_type: EVENT_TYPE,
         }
       ],
@@ -171,7 +208,7 @@ export class MparticleAction extends Hub.Action {
     }
   }
 
-  protected mapObject(obj: any, field: any) {
+  protected mapObject(obj: any, field: any, eventType: string) {
     const userIdentities: any = {
       mp_customer_id: 'customerid',
       mp_email: 'email',
@@ -185,28 +222,90 @@ export class MparticleAction extends Hub.Action {
       mp_other3: 'other3',
       mp_other4: 'other4',
     }
+    // maybe keep full list, and then step through the flat structure and put them in the right place?
+    // check for event_name, then device_info, then data ones, then else to custom.
+    // mp_event_name: 'event_name',
+    const dataEventAttributes: any = {
+      mp_custom_event_type: 'custom_event_type',
+      mp_event_id: 'event_id',
+      mp_timestamp_unixtime_ms: 'timestamp_unixtime_ms',
+      mp_session_id: 'session_id',
+      mp_session_uuid: 'session_uuid',
+      // "device_info.looker_<name_of_dimension>",
+      // "custom_attributes.looker_<name_of_dimension>"
+    }
 
-    if (field.tags) {
-      const tag = field.tags[0]
-      if (Object.keys(userIdentities).indexOf(tag) !== -1) {
-        obj.userIdentities[field.name] = userIdentities[tag]
-      } else {
-        obj.userAttributes[field.name] = `looker_${field.name}`
+    if (eventType === 'user') {
+      if (field.tags) {
+        const tag = field.tags[0]
+        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
+          obj.userIdentities[field.name] = userIdentities[tag]
+        } else {
+          obj.userAttributes[field.name] = `looker_${field.name}`
+        }
+      }
+    } else {
+      if (field.tags) {
+        const tag = field.tags[0]
+        if (tag === 'mp_event_name') {
+          obj.eventName = obj.eventName || {}
+          obj.eventName[field.name] = 'event_name'
+        } else if (tag === 'mp_device_info') {
+          obj.deviceInfo = obj.deviceInfo || {}
+          obj.deviceInfo[field.name] = `looker_${field.name}`
+        } else if (dataEventAttributes.indexOf(tag) !== -1) {
+          obj.dataEventAttributes = obj.dataEventAttributes || {}
+          obj.dataEventAttributes[field.name] = dataEventAttributes[tag]
+        } else {
+          obj.customAttributes = obj.customAttributes || {}
+          obj.customAttributes[field.name] = `looker_${field.name}`
+        }
       }
     }
   }
 
-  protected createMappingFromFields(fields: any) {
-    const mapping: any = {
-      userIdentities: {},
-      userAttributes: {},
+  protected setEventType(fields: any) {
+    const userIdentities: any = [
+      "mp_customer_id",
+      "mp_email",
+      "mp_facebook",
+      "mp_google",
+      "mp_microsoft",
+      "mp_twitter",
+      "mp_yahoo",
+      "mp_other",
+      "mp_other2",
+      "mp_other3",
+      "mp_other4",
+    ]
+
+    const measures = fields.measures.some((field: any) => {
+      field.tags && userIdentities.indexOf(field.tags[0]) !== -1
+    })
+    const dims = fields.dimensions.some((field: any) => {
+      field.tags && userIdentities.indexOf(field.tags[0]) !== -1
+    })
+    return measures || dims ? 'user' : 'event'
+  }
+
+  protected createMappingFromFields(fields: any, eventType: string) {
+    let mapping: any
+    if (eventType === 'user') {
+      mapping = {
+        userIdentities: {},
+        userAttributes: {},
+      }
+    } else {
+      mapping = {
+        data: {},
+      }
     }
 
     fields.measures.forEach((m: any) => {
-      this.mapObject(mapping, m)
+      this.mapObject(mapping, m, eventType)
     })
     fields.dimensions.forEach((d: any) => {
-      this.mapObject(mapping, d)
+      this.mapObject(mapping, d, eventType)
     })
     return mapping
   }
