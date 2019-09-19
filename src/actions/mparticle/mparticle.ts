@@ -171,7 +171,7 @@ export class MparticleAction extends Hub.Action {
         })
       }
       if (mappings.deviceInfo) {
-        data.device_info = {} as any
+        if (!data.device_info) data.device_info = {} as any
         Object.keys(mappings.deviceInfo).forEach((di: any) => {
           const key = mappings.deviceInfo[di]
           const val = row[di].value
@@ -186,7 +186,7 @@ export class MparticleAction extends Hub.Action {
         })
       }
       if (mappings.customAttributes) {
-        data.custom_attributes = {} as any
+        if (!data.custom_attributes) data.custom_attributes = {} as any
         Object.keys(mappings.customAttributes).forEach((ca: any) => {
           const key = mappings.customAttributes[ca]
           const val = row[ca].value
