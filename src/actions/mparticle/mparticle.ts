@@ -82,7 +82,7 @@ export class MparticleAction extends Hub.Action {
     const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
     let mappings: any
-    let eventType: string
+    let eventType: string = 'user'
 
     try {
 
@@ -280,11 +280,13 @@ export class MparticleAction extends Hub.Action {
     ]
 
     const measures = fields.measures.some((field: any) => {
-      field.tags && userIdentities.indexOf(field.tags[0]) !== -1
+      return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
     })
     const dims = fields.dimensions.some((field: any) => {
-      field.tags && userIdentities.indexOf(field.tags[0]) !== -1
+      return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
     })
+    winston.debug('meas', measures)
+    winston.debug('dims', dims)
     return measures || dims ? 'user' : 'event'
   }
 
