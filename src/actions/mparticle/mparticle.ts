@@ -231,8 +231,6 @@ export class MparticleAction extends Hub.Action {
       mp_timestamp_unixtime_ms: 'timestamp_unixtime_ms',
       mp_session_id: 'session_id',
       mp_session_uuid: 'session_uuid',
-      // "device_info.looker_<name_of_dimension>",
-      // "custom_attributes.looker_<name_of_dimension>"
     }
 
     if (eventType === 'user') {
@@ -260,22 +258,18 @@ export class MparticleAction extends Hub.Action {
           obj.customAttributes = obj.customAttributes || {}
           obj.customAttributes[field.name] = `looker_${field.name}`
         }
+        winston.debug('OBJ', JSON.stringify(obj))
       }
     }
   }
 
   protected setEventType(fields: any) {
     const userIdentities: any = [
-      "mp_customer_id",
-      "mp_email",
-      "mp_facebook",
-      "mp_google",
-      "mp_microsoft",
-      "mp_twitter",
-      "mp_yahoo",
-      "mp_other",
-      "mp_other2",
-      "mp_other3",
+      "mp_customer_id", "mp_email",
+      "mp_facebook", "mp_google",
+      "mp_microsoft", "mp_twitter",
+      "mp_yahoo", "mp_other",
+      "mp_other2", "mp_other3",
       "mp_other4",
     ]
 
@@ -285,8 +279,6 @@ export class MparticleAction extends Hub.Action {
     const dims = fields.dimensions.some((field: any) => {
       return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
     })
-    winston.debug('meas', measures)
-    winston.debug('dims', dims)
     return measures || dims ? 'user' : 'event'
   }
 
@@ -298,9 +290,7 @@ export class MparticleAction extends Hub.Action {
         userAttributes: {},
       }
     } else {
-      mapping = {
-        data: {},
-      }
+      mapping = {}
     }
 
     fields.measures.forEach((m: any) => {
@@ -309,6 +299,7 @@ export class MparticleAction extends Hub.Action {
     fields.dimensions.forEach((d: any) => {
       this.mapObject(mapping, d, eventType)
     })
+    winston.debug('MADE MAPPING', JSON.stringify(mapping))
     return mapping
   }
 }
