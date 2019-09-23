@@ -128,7 +128,17 @@ export class MparticleAction extends Hub.Action {
 
   async form() {
     const form = new Hub.ActionForm()
-    form.fields = []
+    form.fields = [{
+      label: "Data Type",
+      name: "data_type",
+      // description: "",
+      required: true,
+      options: [
+        {name: "user_data", label: "user_data"},
+        {name: "event_data", label: "event_data"},
+      ],
+      type: "select",
+    }]
     return form
   }
 
