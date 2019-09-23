@@ -15,13 +15,13 @@ const maxEventsPerBatch = 3 //100
 export class MparticleTransaction {
 
   async handleRequest(request: Hub.ActionRequest): Promise<Hub.ActionResponse> {
-    let body: any[] = []
     const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
     let mappings: any
     let eventType: string = this.setEventType(request.formParams.data_type)
 
     const { apiKey, apiSecret } = request.params
+    winston.debug("INITIAL ROW COUNT", rows.length)
 
     try {
       await request.streamJsonDetail({
@@ -33,11 +33,13 @@ export class MparticleTransaction {
             rows.push(row)
             if (rows.length === maxEventsPerBatch) {
               winston.debug('onRow', JSON.stringify(rows))
-              this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
+              this.sendChunk(rows, apiKey, apiSecret, mappings, eventType)
+              winston.debug("RIGHT AFTER onRow this.sendChunk")
             }
           } catch (e) {
             errors.push(e)
           }
+          winston.debug("onRow ROW COUNT", rows.length)
         },
       })
     } catch (e) {
@@ -46,12 +48,12 @@ export class MparticleTransaction {
 
     // we awaited streamJsonDetail, so we've got all our rows now
 
-    winston.debug('ROWS AFTER ASYNC', JSON.stringify(rows))
+    winston.debug('ROWS COUNT AFTER ASYNC, should be 2', rows.length)
 
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
-        await this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
+        await this.sendChunk(rows, apiKey, apiSecret, mappings, eventType)
       }
       return new Hub.ActionResponse({ success: true })
     } catch (e) {
@@ -59,22 +61,22 @@ export class MparticleTransaction {
     }
   }
 
-  async sendChunk(body: any, rows: any, apiKey: any, apiSecret: any, mappings: any, eventType: any) {
+  async sendChunk(rows: any, apiKey: any, apiSecret: any, mappings: any, eventType: any) {
     const chunk = rows.slice(0)
-
-    body = []
+    let body: any[] = []
+    rows = []
     chunk.forEach((row: any) => {
       const eventEntry = this.createEvent(row, mappings, eventType)
       body.push(eventEntry)
     })
 
-    winston.debug('BODY', JSON.stringify(body))
-    winston.debug('NUM ROWS', rows.length)
     const options = this.postOptions(apiKey, apiSecret, body)
+    winston.debug("SENDING DATA")
     let resp = await httpRequest.post(options).promise()
+    winston.debug("SENT DATA, resetting rows and body")
     // reset arrays
-    rows = []
-    body = []
+    // rows = []
+    // body = []
 
     return resp
   }
