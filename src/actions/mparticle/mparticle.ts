@@ -73,7 +73,8 @@ export class MparticleAction extends Hub.Action {
           // add the row to our row queue
           rows.push(row)
           if (rows.length === maxEventsPerBatch) {
-            await this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
+            winston.debug('onRow', JSON.stringify(rows))
+            this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
           }
         },
       })
@@ -83,7 +84,7 @@ export class MparticleAction extends Hub.Action {
 
     // we awaited streamJsonDetail, so we've got all our rows now
 
-    winston.debug('MAPPINGS', JSON.stringify(mappings))
+    winston.debug('ROWS AFTER ASYNC', JSON.stringify(rows))
 
     try {
       // if any rows are left, send one more chunk
