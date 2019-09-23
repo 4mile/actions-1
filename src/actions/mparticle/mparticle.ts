@@ -11,30 +11,7 @@ const ENVIRONMENT = "development"
 const USER = "user"
 const EVENT = "event"
 
-export enum MparticleUserTags {
-  MpCustomerId = "mp_customer_id",
-  MpEmail = "mp_email",
-  MpFacebook = "mp_facebook",
-  MpGoogle = "mp_google",
-  MpMicrosoft = "mp_microsoft",
-  MpTwitter = "mp_twitter",
-  MpYahoo = "mp_yahoo",
-  MpOther = "mp_other",
-  MpOther2 = "mp_other2",
-  MpOther3 = "mp_other3",
-  MpOther4 = "mp_other4",
-  MpUserAttribute = "mp_user_attribute",
-}
-
-export enum MparticleEventTags {
-  MpEventName = "mp_event_name",
-  MpCustomEventType = "mp_custom_event_type",
-  MpEventId = "mp_event_id",
-  MpTimestampUnixtimeMs = "mp_timestamp_unixtime_ms",
-  MpSessionId = "mp_session_id",
-  MpDeviceInfo = "mp_device_info",
-  MpCustomAttribute = "mp_custom_attribute",
-}
+const maxEventsPerBatch = 100
 
 export class MparticleAction extends Hub.Action {
 
@@ -74,14 +51,15 @@ export class MparticleAction extends Hub.Action {
 
   async execute(request: Hub.ActionRequest) {
 
-    const body: any[] = []
+    let body: any[] = []
     const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
     let mappings: any
     let eventType: string = this.setEventType(request.formParams.data_type)
 
-    try {
+    const { apiKey, apiSecret } = request.params
 
+    try {
       await request.streamJsonDetail({
         onFields: (fields) => {
           mappings = this.createMappingFromFields(fields, eventType)
@@ -92,25 +70,29 @@ export class MparticleAction extends Hub.Action {
           } catch (e) {
             errors.push(e)
           }
+          // add the row to our row queue
+          rows.push(row)
+          if (rows.length === maxEventsPerBatch) {
+            this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
+          }
         },
       })
     } catch (e) {
       errors.push(e)
     }
-    rows.forEach((row) => {
-      const eventEntry = this.createEvent(row, mappings, eventType)
-      body.push(eventEntry)
-    })
+
+    // we awaited streamJsonDetail, so we've got all our rows now
+
 
     winston.debug("REQUEST", JSON.stringify(request))
     winston.debug('MAPPINGS', JSON.stringify(mappings))
     winston.debug('BODY', JSON.stringify(body))
 
-    const { apiKey, apiSecret } = request.params
-    const options = this.postOptions(apiKey, apiSecret, body)
-
     try {
-      await httpRequest.post(options).promise()
+      // if any rows are left, send one more chunk
+      if (rows.length > 0) {
+        await this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
+      }
       return new Hub.ActionResponse({ success: true })
     } catch (e) {
       return new Hub.ActionResponse({ success: false, message: e.message })
@@ -131,6 +113,24 @@ export class MparticleAction extends Hub.Action {
       type: "select",
     }]
     return form
+  }
+
+  async sendChunk(body: any, rows: any, apiKey: any, apiSecret: any, mappings: any, eventType: any) {
+    const chunk = rows.slice(0)
+
+    body = []
+    chunk.forEach((row: any) => {
+      const eventEntry = this.createEvent(row, mappings, eventType)
+      body.push(eventEntry)
+    })
+
+    const options = this.postOptions(apiKey, apiSecret, body)
+    let resp = await httpRequest.post(options).promise()
+    // reset arrays
+    rows = []
+    body = []
+
+    return resp
   }
 
   protected createEvent(row: any, mappings: any, eventType: string) {
