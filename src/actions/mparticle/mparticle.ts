@@ -73,7 +73,7 @@ export class MparticleAction extends Hub.Action {
           // add the row to our row queue
           rows.push(row)
           if (rows.length === maxEventsPerBatch) {
-            this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
+            await this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
           }
         },
       })
@@ -83,8 +83,6 @@ export class MparticleAction extends Hub.Action {
 
     // we awaited streamJsonDetail, so we've got all our rows now
 
-
-    winston.debug("REQUEST", JSON.stringify(request))
     winston.debug('MAPPINGS', JSON.stringify(mappings))
 
     try {
