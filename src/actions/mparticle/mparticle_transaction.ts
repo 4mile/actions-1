@@ -10,6 +10,7 @@ const ENVIRONMENT = "development"
 const USER = "user"
 const EVENT = "event"
 
+// Limit to how many rows allowed per batch, set by MParticle API
 const maxEventsPerBatch = 2 //100
 
 export class MparticleTransaction {
@@ -35,9 +36,7 @@ export class MparticleTransaction {
           try {
             rows.push(row)
             if (rows.length === maxEventsPerBatch) {
-              winston.debug('onRow', rows.length)
               this.sendChunk(rows, mappings, eventType)
-              winston.debug("RIGHT AFTER onRow this.sendChunk")
               rows = []
             }
           } catch (e) {
@@ -48,8 +47,6 @@ export class MparticleTransaction {
     } catch (e) {
       errors.push(e)
     }
-
-    winston.debug('ROWS COUNT AFTER ASYNC, should be 2', rows.length)
 
     try {
       // if any rows are left, send one more chunk
