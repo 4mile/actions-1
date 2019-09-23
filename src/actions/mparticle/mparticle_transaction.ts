@@ -10,9 +10,11 @@ const ENVIRONMENT = "development"
 const USER = "user"
 const EVENT = "event"
 
-const maxEventsPerBatch = 3 //100
+const maxEventsPerBatch = 2 //100
 
 export class MparticleTransaction {
+  apiKey: string | undefined
+  apiSecret: string | undefined
 
   async handleRequest(request: Hub.ActionRequest): Promise<Hub.ActionResponse> {
     const errors: Error[] = []
@@ -21,6 +23,8 @@ export class MparticleTransaction {
     let eventType: string = this.setEventType(request.formParams.data_type)
 
     const { apiKey, apiSecret } = request.params
+    this.apiKey = apiKey
+    this.apiSecret = apiSecret
 
     try {
       await request.streamJsonDetail({
@@ -32,7 +36,7 @@ export class MparticleTransaction {
             rows.push(row)
             if (rows.length === maxEventsPerBatch) {
               winston.debug('onRow', rows.length)
-              this.sendChunk(rows, apiKey, apiSecret, mappings, eventType)
+              this.sendChunk(rows, mappings, eventType)
               winston.debug("RIGHT AFTER onRow this.sendChunk")
               rows = []
             }
@@ -45,14 +49,12 @@ export class MparticleTransaction {
       errors.push(e)
     }
 
-    // we awaited streamJsonDetail, so we've got all our rows now
-
     winston.debug('ROWS COUNT AFTER ASYNC, should be 2', rows.length)
 
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
-        await this.sendChunk(rows, apiKey, apiSecret, mappings, eventType)
+        await this.sendChunk(rows, mappings, eventType)
       }
       return new Hub.ActionResponse({ success: true })
     } catch (e) {
@@ -60,7 +62,7 @@ export class MparticleTransaction {
     }
   }
 
-  async sendChunk(rows: any, apiKey: any, apiSecret: any, mappings: any, eventType: any) {
+  async sendChunk(rows: any, mappings: any, eventType: any) {
     winston.debug("ROW COUNT TOP OF sendChunk", rows.length)
     const chunk = rows.slice(0)
     let body: any[] = []
@@ -70,13 +72,8 @@ export class MparticleTransaction {
     })
 
     winston.debug("BODY", JSON.stringify(body))
-    const options = this.postOptions(apiKey, apiSecret, body)
-    let resp = await httpRequest.post(options).promise()
-    // reset arrays
-    // rows = []
-    // body = []
-
-    return resp
+    const options = this.postOptions(body)
+    return await httpRequest.post(options).promise()
   }
 
   protected createEvent(row: any, mappings: any, eventType: string) {
@@ -224,9 +221,9 @@ export class MparticleTransaction {
     }
   }
 
-  protected postOptions(apiKey: string | undefined, apiSecret: string | undefined, body: any) {
+  protected postOptions(body: any) {
     const auth = Buffer
-      .from(`${apiKey}:${apiSecret}`)
+      .from(`${this.apiKey}:${this.apiSecret}`)
       .toString('base64')
 
     return {
