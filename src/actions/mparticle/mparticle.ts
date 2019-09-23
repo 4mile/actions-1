@@ -67,14 +67,12 @@ export class MparticleAction extends Hub.Action {
         onRow: (row) => {
           try {
             rows.push(row)
+            if (rows.length === maxEventsPerBatch) {
+              winston.debug('onRow', JSON.stringify(rows))
+              this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
+            }
           } catch (e) {
             errors.push(e)
-          }
-          // add the row to our row queue
-          rows.push(row)
-          if (rows.length === maxEventsPerBatch) {
-            winston.debug('onRow', JSON.stringify(rows))
-            this.sendChunk(body, rows, apiKey, apiSecret, mappings, eventType)
           }
         },
       })
