@@ -3,15 +3,12 @@ import * as Hub from "../../hub"
 
 import * as httpRequest from "request-promise-native"
 
-const MP_API_URL = "https://s2s.mparticle.com/v2/bulkevents/"
-const EVENT_NAME = "jj_test_app_event"
-const EVENT_TYPE = "custom_event"
-const ENVIRONMENT = "development"
-const USER = "user"
-const EVENT = "event"
-
-// Limit to how many rows allowed per batch, set by MParticle API
-const maxEventsPerBatch = 2 //100
+import {
+  MparticleUserTags, MparticleUserMaps, MparticleEventTags, MparticleEventMaps,
+} from './mparticle_enums'
+import {
+  MP_API_URL, EVENT_NAME, EVENT_TYPE, ENVIRONMENT, USER, EVENT, maxEventsPerBatch,
+} from './mparticle_constants'
 
 export class MparticleTransaction {
   apiKey: string | undefined
@@ -138,9 +135,9 @@ export class MparticleTransaction {
   }
 
   protected setEventType(dataType: string | undefined) {
-    if (dataType === 'user_data') {
+    if (dataType === USER) {
       return USER
-    } else if (dataType === 'event_data') {
+    } else if (dataType === EVENT) {
       return EVENT
     }
     throw "Missing data type (user|event)."
@@ -174,25 +171,25 @@ export class MparticleTransaction {
 
   protected mapObject(obj: any, field: any, eventType: string) {
     const userIdentities: any = {
-      mp_customer_id: 'customerid',
-      mp_email: 'email',
-      mp_facebook: 'facebook',
-      mp_google: 'google',
-      mp_microsoft: 'microsoft',
-      mp_twitter: 'twitter',
-      mp_yahoo: 'yahoo',
-      mp_other: 'other',
-      mp_other2: 'other2',
-      mp_other3: 'other3',
-      mp_other4: 'other4',
+      [MparticleUserTags.MpCustomerId]: MparticleUserMaps.Customerid,
+      [MparticleUserTags.MpEmail]: MparticleUserMaps.Email,
+      [MparticleUserTags.MpFacebook]: MparticleUserMaps.Facebook,
+      [MparticleUserTags.MpGoogle]: MparticleUserMaps.Google,
+      [MparticleUserTags.MpMicrosoft]: MparticleUserMaps.Microsoft,
+      [MparticleUserTags.MpTwitter]: MparticleUserMaps.Twitter,
+      [MparticleUserTags.MpYahoo]: MparticleUserMaps.Yahoo,
+      [MparticleUserTags.MpOther]: MparticleUserMaps.Other,
+      [MparticleUserTags.MpOther2]: MparticleUserMaps.Other2,
+      [MparticleUserTags.MpOther3]: MparticleUserMaps.Other3,
+      [MparticleUserTags.MpOther4]: MparticleUserMaps.Other4,
     }
 
     const dataEventAttributes: any = {
-      mp_custom_event_type: 'custom_event_type',
-      mp_event_id: 'event_id',
-      mp_timestamp_unixtime_ms: 'timestamp_unixtime_ms',
-      mp_session_id: 'session_id',
-      mp_session_uuid: 'session_uuid',
+      [MparticleEventTags.MpCustomEventType]: MparticleEventMaps.CustomEventType,
+      [MparticleEventTags.MpEventId]: MparticleEventMaps.EventId,
+      [MparticleEventTags.MpTimestampUnixtimeMs]: MparticleEventMaps.TimestampUnixtimeMs,
+      [MparticleEventTags.MpSessionId]: MparticleEventMaps.SessionId,
+      [MparticleEventTags.MpSessionUuid]: MparticleEventMaps.SessionUuid,
     }
 
     if (field.tags.length > 0) {
@@ -205,9 +202,9 @@ export class MparticleTransaction {
         }
       } else {
         const tag = field.tags[0]
-        if (tag === 'mp_event_name') {
-          obj.eventName[field.name] = 'event_name'
-        } else if (tag === 'mp_device_info') {
+        if (tag === MparticleEventTags.MpEventName) {
+          obj.eventName[field.name] = MparticleEventMaps.EventName
+        } else if (tag === MparticleEventTags.MpDeviceInfo) {
           obj.deviceInfo[field.name] = `looker_${field.name}`
         } else if (Object.keys(dataEventAttributes).indexOf(tag) !== -1) {
           obj.dataEventAttributes[field.name] = dataEventAttributes[tag]
