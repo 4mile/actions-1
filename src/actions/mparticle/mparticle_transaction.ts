@@ -32,14 +32,14 @@ export class MparticleTransaction {
           try {
             rows.push(row)
             if (rows.length === maxEventsPerBatch) {
-              winston.debug('onRow', JSON.stringify(rows))
+              winston.debug('onRow', rows.length)
               this.sendChunk(rows, apiKey, apiSecret, mappings, eventType)
               winston.debug("RIGHT AFTER onRow this.sendChunk")
+              rows = []
             }
           } catch (e) {
             errors.push(e)
           }
-          winston.debug("onRow ROW COUNT", rows.length)
         },
       })
     } catch (e) {
@@ -62,9 +62,9 @@ export class MparticleTransaction {
   }
 
   async sendChunk(rows: any, apiKey: any, apiSecret: any, mappings: any, eventType: any) {
+    winston.debug("ROW COUNT TOP OF sendChunk", rows.length)
     const chunk = rows.slice(0)
     let body: any[] = []
-    rows = []
     chunk.forEach((row: any) => {
       const eventEntry = this.createEvent(row, mappings, eventType)
       body.push(eventEntry)
