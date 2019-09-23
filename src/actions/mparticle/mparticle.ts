@@ -78,13 +78,12 @@ export class MparticleAction extends Hub.Action {
     const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
     let mappings: any
-    let eventType: string
+    let eventType: string = this.setEventType(request.formParams.data_type)
 
     try {
 
       await request.streamJsonDetail({
         onFields: (fields) => {
-          eventType = this.setEventType(fields)
           mappings = this.createMappingFromFields(fields, eventType)
         },
         onRow: (row) => {
@@ -132,7 +131,7 @@ export class MparticleAction extends Hub.Action {
     form.fields = [{
       label: "Data Type",
       name: "data_type",
-      // description: "",
+      description: "Whether it is user or event data.",
       required: true,
       options: [
         {name: "user_data", label: "user_data"},
@@ -207,23 +206,8 @@ export class MparticleAction extends Hub.Action {
     }
   }
 
-  protected setEventType(fields: any) {
-    const userIdentities: any = [
-      "mp_customer_id", "mp_email",
-      "mp_facebook", "mp_google",
-      "mp_microsoft", "mp_twitter",
-      "mp_yahoo", "mp_other",
-      "mp_other2", "mp_other3",
-      "mp_other4",
-    ]
-
-    const measures = fields.measures.some((field: any) => {
-      return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
-    })
-    const dims = fields.dimensions.some((field: any) => {
-      return field.tags && userIdentities.indexOf(field.tags[0]) !== -1
-    })
-    return measures || dims ? USER : EVENT
+  protected setEventType(dataType: string) {
+    return dataType === 'user_data' ? USER : EVENT
   }
 
   // Sets up the map object and loops over all fields.
