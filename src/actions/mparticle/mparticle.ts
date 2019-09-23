@@ -11,7 +11,7 @@ const ENVIRONMENT = "development"
 const USER = "user"
 const EVENT = "event"
 
-const maxEventsPerBatch = 100
+const maxEventsPerBatch = 3 //100
 
 export class MparticleAction extends Hub.Action {
 
