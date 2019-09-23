@@ -21,7 +21,6 @@ export class MparticleTransaction {
     let eventType: string = this.setEventType(request.formParams.data_type)
 
     const { apiKey, apiSecret } = request.params
-    winston.debug("INITIAL ROW COUNT", rows.length)
 
     try {
       await request.streamJsonDetail({
@@ -70,10 +69,9 @@ export class MparticleTransaction {
       body.push(eventEntry)
     })
 
+    winston.debug("BODY", JSON.stringify(body))
     const options = this.postOptions(apiKey, apiSecret, body)
-    winston.debug("SENDING DATA")
     let resp = await httpRequest.post(options).promise()
-    winston.debug("SENT DATA, resetting rows and body")
     // reset arrays
     // rows = []
     // body = []
