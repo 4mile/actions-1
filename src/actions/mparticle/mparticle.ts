@@ -112,6 +112,7 @@ export class MparticleAction extends Hub.Action {
       body.push(eventEntry)
     })
 
+    winston.debug("REQUEST", JSON.stringify(request))
     winston.debug('MAPPINGS', JSON.stringify(mappings))
     winston.debug('BODY', JSON.stringify(body))
 
