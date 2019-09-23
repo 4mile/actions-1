@@ -206,8 +206,14 @@ export class MparticleAction extends Hub.Action {
     }
   }
 
-  protected setEventType(dataType: string) {
+  protected setEventType(dataType: string | undefined) {
     return dataType === 'user_data' ? USER : EVENT
+    if (dataType === 'user_data') {
+      return USER
+    } else if (dataType === 'event_data') {
+      return EVENT
+    }
+    throw "Missing data type (user|event)."
   }
 
   // Sets up the map object and loops over all fields.
