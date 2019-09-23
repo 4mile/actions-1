@@ -86,7 +86,6 @@ export class MparticleAction extends Hub.Action {
 
     winston.debug("REQUEST", JSON.stringify(request))
     winston.debug('MAPPINGS', JSON.stringify(mappings))
-    winston.debug('BODY', JSON.stringify(body))
 
     try {
       // if any rows are left, send one more chunk
@@ -124,6 +123,8 @@ export class MparticleAction extends Hub.Action {
       body.push(eventEntry)
     })
 
+    winston.debug('BODY', JSON.stringify(body))
+    winston.debug('NUM ROWS', rows.length)
     const options = this.postOptions(apiKey, apiSecret, body)
     let resp = await httpRequest.post(options).promise()
     // reset arrays
