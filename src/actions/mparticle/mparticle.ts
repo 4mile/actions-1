@@ -94,15 +94,6 @@ export class MparticleAction extends Hub.Action {
           }
         },
       })
-
-      await new Promise<void>(async (resolve, reject) => {
-        // try to post here?
-        if (2+2) {
-          resolve()
-        } else {
-          reject()
-        }
-      })
     } catch (e) {
       errors.push(e)
     }
