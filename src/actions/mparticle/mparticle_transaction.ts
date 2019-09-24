@@ -3,22 +3,55 @@ import * as Hub from "../../hub"
 
 import * as httpRequest from "request-promise-native"
 
-import {
-  MparticleUserTags, MparticleUserMaps, MparticleEventTags, MparticleEventMaps,
-} from './mparticle_enums'
-import {
-  MP_API_URL, EVENT_NAME, EVENT_TYPE, ENVIRONMENT, USER, EVENT, maxEventsPerBatch,
-} from './mparticle_constants'
+import { MparticleUserTags, MparticleUserMaps, MparticleEventTags, MparticleEventMaps } from './mparticle_enums'
+import { MP_API_URL, EVENT_NAME, EVENT_TYPE, ENVIRONMENT, USER, EVENT, maxEventsPerBatch } from './mparticle_constants'
+
+// import { LookmlModelExploreFieldset as ExploreFieldset } from "../../api_types/lookml_model_explore_fieldset"
+import { LookmlModelExploreField as ExploreField } from '../../api_types/lookml_model_explore_field'
+
+interface Mapping {
+  customAttributes?: object
+  dataEventAttributes?: object
+  deviceInfo?: object
+  eventName?: object
+  userAttributes?: object
+  userIdentities?: object
+}
 
 export class MparticleTransaction {
   apiKey: string | undefined
   apiSecret: string | undefined
+  eventType: string = ''
+
+  // The mapping for user-related data
+  userIdentities: {[key:string]: string} = {
+    [MparticleUserTags.MpCustomerId]: MparticleUserMaps.Customerid,
+    [MparticleUserTags.MpEmail]: MparticleUserMaps.Email,
+    [MparticleUserTags.MpFacebook]: MparticleUserMaps.Facebook,
+    [MparticleUserTags.MpGoogle]: MparticleUserMaps.Google,
+    [MparticleUserTags.MpMicrosoft]: MparticleUserMaps.Microsoft,
+    [MparticleUserTags.MpTwitter]: MparticleUserMaps.Twitter,
+    [MparticleUserTags.MpYahoo]: MparticleUserMaps.Yahoo,
+    [MparticleUserTags.MpOther]: MparticleUserMaps.Other,
+    [MparticleUserTags.MpOther2]: MparticleUserMaps.Other2,
+    [MparticleUserTags.MpOther3]: MparticleUserMaps.Other3,
+    [MparticleUserTags.MpOther4]: MparticleUserMaps.Other4,
+  }
+
+  // The mapping for event-related data, specific to API request's data section.
+  dataEventAttributes: {[key:string]: string} = {
+    [MparticleEventTags.MpCustomEventType]: MparticleEventMaps.CustomEventType,
+    [MparticleEventTags.MpEventId]: MparticleEventMaps.EventId,
+    [MparticleEventTags.MpTimestampUnixtimeMs]: MparticleEventMaps.TimestampUnixtimeMs,
+    [MparticleEventTags.MpSessionId]: MparticleEventMaps.SessionId,
+    [MparticleEventTags.MpSessionUuid]: MparticleEventMaps.SessionUuid,
+  }
 
   async handleRequest(request: Hub.ActionRequest): Promise<Hub.ActionResponse> {
     const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
-    let mappings: any
-    let eventType: string = this.setEventType(request.formParams.data_type)
+    let mapping: Mapping = {}
+    this.eventType = this.setEventType(request.formParams.data_type)
 
     const { apiKey, apiSecret } = request.params
     this.apiKey = apiKey
@@ -27,13 +60,13 @@ export class MparticleTransaction {
     try {
       await request.streamJsonDetail({
         onFields: (fields) => {
-          mappings = this.createMappingFromFields(fields, eventType)
+          mapping = this.createMappingFromFields(fields)
         },
         onRow: (row) => {
           try {
             rows.push(row)
             if (rows.length === maxEventsPerBatch) {
-              this.sendChunk(rows, mappings, eventType)
+              this.sendChunk(rows, mapping)
               rows = []
             }
           } catch (e) {
@@ -48,7 +81,7 @@ export class MparticleTransaction {
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
-        await this.sendChunk(rows, mappings, eventType)
+        await this.sendChunk(rows, mapping)
       }
       return new Hub.ActionResponse({ success: true })
     } catch (e) {
@@ -56,12 +89,12 @@ export class MparticleTransaction {
     }
   }
 
-  async sendChunk(rows: any, mappings: any, eventType: any) {
+  async sendChunk(rows: any, mapping: any) {
     winston.debug("ROW COUNT TOP OF sendChunk", rows.length)
     const chunk = rows.slice(0)
     let body: any[] = []
     chunk.forEach((row: any) => {
-      const eventEntry = this.createEvent(row, mappings, eventType)
+      const eventEntry = this.createEvent(row, mapping)
       body.push(eventEntry)
     })
 
@@ -70,50 +103,50 @@ export class MparticleTransaction {
     return await httpRequest.post(options).promise()
   }
 
-  protected createEvent(row: any, mappings: any, eventType: string) {
+  protected createEvent(row: any, mapping: any) {
     const eventUserIdentities: any = {}
     const eventUserAttributes: any = {}
     const data: any = {
       event_name: EVENT_NAME,
     }
 
-    if (eventType === USER) {
-      Object.keys(mappings.userIdentities).forEach((attr: any) => {
-        const key = mappings.userIdentities[attr]
+    if (this.eventType === USER) {
+      Object.keys(mapping.userIdentities).forEach((attr: any) => {
+        const key = mapping.userIdentities[attr]
         const val = row[attr].value
         eventUserIdentities[key] = val
       })
 
-      Object.keys(mappings.userAttributes).forEach((attr: any) => {
-        const key = mappings.userAttributes[attr]
+      Object.keys(mapping.userAttributes).forEach((attr: any) => {
+        const key = mapping.userAttributes[attr]
         const val = row[attr].value
         eventUserAttributes[key] = val
       })
     } else {
       data.device_info = {}
       data.custom_attributes = {}
-      if (mappings.eventName) {
-        Object.keys(mappings.eventName).forEach((attr: any) => {
+      if (mapping.eventName) {
+        Object.keys(mapping.eventName).forEach((attr: any) => {
           data.event_name = row[attr].value
         })
       }
-      if (mappings.deviceInfo) {
-        Object.keys(mappings.deviceInfo).forEach((attr: any) => {
-          const key = mappings.deviceInfo[attr]
+      if (mapping.deviceInfo) {
+        Object.keys(mapping.deviceInfo).forEach((attr: any) => {
+          const key = mapping.deviceInfo[attr]
           const val = row[attr].value
           data.device_info[key] = val
         })
       }
-      if (mappings.dataEventAttributes) {
-        Object.keys(mappings.dataEventAttributes).forEach((attr: any) => {
-          const key = mappings.dataEventAttributes[attr]
+      if (mapping.dataEventAttributes) {
+        Object.keys(mapping.dataEventAttributes).forEach((attr: any) => {
+          const key = mapping.dataEventAttributes[attr]
           const val = row[attr].value
           data[key] = val
         })
       }
-      if (mappings.customAttributes) {
-        Object.keys(mappings.customAttributes).forEach((attr: any) => {
-          const key = mappings.customAttributes[attr]
+      if (mapping.customAttributes) {
+        Object.keys(mapping.customAttributes).forEach((attr: any) => {
+          const key = mapping.customAttributes[attr]
           const val = row[attr].value
           data.custom_attributes[key] = val
         })
@@ -144,9 +177,9 @@ export class MparticleTransaction {
   }
 
   // Sets up the map object and loops over all fields.
-  protected createMappingFromFields(fields: any, eventType: string) {
-    let mapping: any
-    if (eventType === USER) {
+  protected createMappingFromFields(fields: any) {
+    let mapping: Mapping
+    if (this.eventType === USER) {
       mapping = {
         userIdentities: {},
         userAttributes: {},
@@ -160,56 +193,34 @@ export class MparticleTransaction {
       }
     }
 
-    fields.measures.forEach((m: any) => {
-      this.mapObject(mapping, m, eventType)
+    fields.measures.forEach((field: ExploreField) => {
+      this.mapObject(mapping, field)
     })
-    fields.dimensions.forEach((d: any) => {
-      this.mapObject(mapping, d, eventType)
+    fields.dimensions.forEach((field: ExploreField) => {
+      this.mapObject(mapping, field)
     })
     return mapping
   }
 
-  protected mapObject(obj: any, field: any, eventType: string) {
-    const userIdentities: any = {
-      [MparticleUserTags.MpCustomerId]: MparticleUserMaps.Customerid,
-      [MparticleUserTags.MpEmail]: MparticleUserMaps.Email,
-      [MparticleUserTags.MpFacebook]: MparticleUserMaps.Facebook,
-      [MparticleUserTags.MpGoogle]: MparticleUserMaps.Google,
-      [MparticleUserTags.MpMicrosoft]: MparticleUserMaps.Microsoft,
-      [MparticleUserTags.MpTwitter]: MparticleUserMaps.Twitter,
-      [MparticleUserTags.MpYahoo]: MparticleUserMaps.Yahoo,
-      [MparticleUserTags.MpOther]: MparticleUserMaps.Other,
-      [MparticleUserTags.MpOther2]: MparticleUserMaps.Other2,
-      [MparticleUserTags.MpOther3]: MparticleUserMaps.Other3,
-      [MparticleUserTags.MpOther4]: MparticleUserMaps.Other4,
-    }
-
-    const dataEventAttributes: any = {
-      [MparticleEventTags.MpCustomEventType]: MparticleEventMaps.CustomEventType,
-      [MparticleEventTags.MpEventId]: MparticleEventMaps.EventId,
-      [MparticleEventTags.MpTimestampUnixtimeMs]: MparticleEventMaps.TimestampUnixtimeMs,
-      [MparticleEventTags.MpSessionId]: MparticleEventMaps.SessionId,
-      [MparticleEventTags.MpSessionUuid]: MparticleEventMaps.SessionUuid,
-    }
-
+  protected mapObject(mapping: any, field: ExploreField) {
     if (field.tags.length > 0) {
-      if (eventType === USER) {
+      if (this.eventType === USER) {
         const tag = field.tags[0]
-        if (Object.keys(userIdentities).indexOf(tag) !== -1) {
-          obj.userIdentities[field.name] = userIdentities[tag]
+        if (Object.keys(this.userIdentities).indexOf(tag) !== -1) {
+          mapping.userIdentities[field.name] = this.userIdentities[tag]
         } else {
-          obj.userAttributes[field.name] = `looker_${field.name}`
+          mapping.userAttributes[field.name] = `looker_${field.name}`
         }
       } else {
         const tag = field.tags[0]
         if (tag === MparticleEventTags.MpEventName) {
-          obj.eventName[field.name] = MparticleEventMaps.EventName
+          mapping.eventName[field.name] = MparticleEventMaps.EventName
         } else if (tag === MparticleEventTags.MpDeviceInfo) {
-          obj.deviceInfo[field.name] = `looker_${field.name}`
-        } else if (Object.keys(dataEventAttributes).indexOf(tag) !== -1) {
-          obj.dataEventAttributes[field.name] = dataEventAttributes[tag]
+          mapping.deviceInfo[field.name] = `looker_${field.name}`
+        } else if (Object.keys(this.dataEventAttributes).indexOf(tag) !== -1) {
+          mapping.dataEventAttributes[field.name] = this.dataEventAttributes[tag]
         } else {
-          obj.customAttributes[field.name] = `looker_${field.name}`
+          mapping.customAttributes[field.name] = `looker_${field.name}`
         }
       }
     }
