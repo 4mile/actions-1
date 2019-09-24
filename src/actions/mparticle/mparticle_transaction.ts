@@ -18,6 +18,8 @@ interface Mapping {
   userIdentities?: object
 }
 
+interface MparticleBulkEvent { [key: string]: any }
+
 export class MparticleTransaction {
   apiKey: string | undefined
   apiSecret: string | undefined
@@ -89,11 +91,11 @@ export class MparticleTransaction {
     }
   }
 
-  async sendChunk(rows: any, mapping: any) {
+  async sendChunk(rows: Hub.JsonDetail.Row[], mapping: any) {
     winston.debug("ROW COUNT TOP OF sendChunk", rows.length)
     const chunk = rows.slice(0)
-    let body: any[] = []
-    chunk.forEach((row: any) => {
+    let body: MparticleBulkEvent[] = []
+    chunk.forEach((row: Hub.JsonDetail.Row) => {
       const eventEntry = this.createEvent(row, mapping)
       body.push(eventEntry)
     })
@@ -103,7 +105,7 @@ export class MparticleTransaction {
     return await httpRequest.post(options).promise()
   }
 
-  protected createEvent(row: any, mapping: any) {
+  protected createEvent(row: Hub.JsonDetail.Row, mapping: any) {
     const eventUserIdentities: any = {}
     const eventUserAttributes: any = {}
     const data: any = {
@@ -226,7 +228,7 @@ export class MparticleTransaction {
     }
   }
 
-  protected postOptions(body: any) {
+  protected postOptions(body: MparticleBulkEvent[]) {
     const auth = Buffer
       .from(`${this.apiKey}:${this.apiSecret}`)
       .toString('base64')
