@@ -4,7 +4,9 @@ import * as Hub from "../../hub"
 import * as httpRequest from "request-promise-native"
 
 import { MparticleUserTags, MparticleUserMaps, MparticleEventTags, MparticleEventMaps } from './mparticle_enums'
-import { MP_API_URL, EVENT_NAME, EVENT_TYPE, ENVIRONMENT, USER, EVENT, maxEventsPerBatch } from './mparticle_constants'
+import { MP_API_URL, EVENT_NAME, EVENT_TYPE, ENVIRONMENT, USER, EVENT } from './mparticle_constants'
+
+const maxEventsPerBatch = process.env.MAX_EVENTS_PER_BATCH
 
 // import { LookmlModelExploreFieldset as ExploreFieldset } from "../../api_types/lookml_model_explore_fieldset"
 import { LookmlModelExploreField as ExploreField } from '../../api_types/lookml_model_explore_field'
@@ -67,7 +69,7 @@ export class MparticleTransaction {
         onRow: (row) => {
           try {
             rows.push(row)
-            if (rows.length === maxEventsPerBatch) {
+            if (rows.length === Number(maxEventsPerBatch)) {
               this.sendChunk(rows, mapping)
               rows = []
             }

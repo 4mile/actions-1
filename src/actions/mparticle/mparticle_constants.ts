@@ -6,4 +6,4 @@ export const USER = "user_data"
 export const EVENT = "event_data"
 
 // Limit to how many rows allowed per batch, set by MParticle API
-export const maxEventsPerBatch = 2 //100
+// export const maxEventsPerBatch = 2 //100
