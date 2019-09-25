@@ -105,8 +105,8 @@ export class MparticleTransaction {
 
     winston.debug("BODY", JSON.stringify(body))
     const options = this.postOptions(body)
-    return await httpRequest.post(options).then((wat) {
-      winston.debug('WAT' wat)
+    return await httpRequest.post(options).then((wat) => {
+      winston.debug('WAT', wat)
     })
   }
 
