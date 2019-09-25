@@ -1,4 +1,4 @@
-export const mparticleErrorCodes = {
+export const mparticleErrorCodes: any = {
   "202": "Accepted - The POST was accepted.",
   "400": "Bad Request -	The request JSON was malformed JSON or had missing fields.",
   "401": "Unauthorized - The authentication header is missing.",
