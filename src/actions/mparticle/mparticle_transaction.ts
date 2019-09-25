@@ -5,7 +5,7 @@ import * as httpRequest from "request-promise-native"
 
 import { MparticleUserTags, MparticleUserMaps, MparticleEventTags, MparticleEventMaps } from './mparticle_enums'
 import { MP_API_URL, EVENT_NAME, EVENT_TYPE, ENVIRONMENT, USER, EVENT } from './mparticle_constants'
-import { mparticleErrorCodes } from './mparticle_error_codes'
+// import { mparticleErrorCodes } from './mparticle_error_codes'
 
 const maxEventsPerBatch = process.env.MAX_EVENTS_PER_BATCH
 
@@ -77,20 +77,10 @@ export class MparticleTransaction {
           mapping = this.createMappingFromFields(fields)
         },
         onRow: (row) => {
-          try {
-            rows.push(row)
-            if (rows.length === Number(maxEventsPerBatch)) {
-              this.sendChunk(rows, mapping).catch((e) => {
-                const code = e.statusCode
-                const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
-                winston.debug('ERROR', JSON.stringify(e))
-                winston.debug("ERROR MSG", msg)
-                this.errors.push(msg)
-              })
-              rows = []
-            }
-          } catch (e) {
-            this.errors.push(e)
+          rows.push(row)
+          if (rows.length === Number(maxEventsPerBatch)) {
+            this.sendChunk(rows, mapping)
+            rows = []
           }
         },
       })
@@ -98,21 +88,22 @@ export class MparticleTransaction {
       this.errors.push(e)
     }
 
+    winston.debug("ERRORS", this.errors.length.toString())
+
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
-        this.sendChunk(rows, mapping)
+        await this.sendChunk(rows, mapping)
       }
       if (this.errors.length === 0) {
-        winston.debug("RETURNING A SUCCESS")
-        winston.debug(rows.length.toString())
+        winston.debug('SUCCESS', rows.length.toString())
         return new Hub.ActionResponse({ success: true })
       } else {
-        winston.debug("REALLY RETURNING A FAILURE")
+        winston.debug("FAIL", JSON.stringify(this.errors))
         return new Hub.ActionResponse({ success: false, message: this.errors[0] })
       }
     } catch (e) {
-      winston.debug("RETURNING A FAILURE")
+      winston.debug("CAUGHT FAIL", e.message)
       return new Hub.ActionResponse({ success: false, message: e.message })
     }
   }
@@ -128,15 +119,7 @@ export class MparticleTransaction {
 
     winston.debug("BODY", JSON.stringify(body))
     const options = this.postOptions(body)
-    httpRequest.post(options).promise()
-      .catch((e: any) => {
-        const code = e.statusCode
-        const msg = `${code} - ${mparticleErrorCodes[code.toString()]}`
-        winston.debug('ERROR', JSON.stringify(e))
-        winston.debug("ERROR MSG", msg)
-        this.errors.push(msg)
-        return new Hub.ActionResponse({success: false, message: msg})
-      })
+    await httpRequest.post(options).promise()
   }
 
   protected createEvent(row: Hub.JsonDetail.Row, mapping: any) {
