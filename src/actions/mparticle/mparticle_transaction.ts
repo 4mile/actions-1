@@ -124,7 +124,7 @@ export class MparticleTransaction {
     httpRequest.post(options)
       .catch((e: any) => {
         const code = e.statusCode
-        const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
+        const msg = `${code} - ${mparticleErrorCodes[code.toString()]}`
         winston.debug('ERROR', JSON.stringify(e))
         winston.debug("ERROR MSG", msg)
         return new Hub.ActionResponse({success: false, message: msg})
