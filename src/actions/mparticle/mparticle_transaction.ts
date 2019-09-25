@@ -119,7 +119,10 @@ export class MparticleTransaction {
 
     winston.debug("BODY", JSON.stringify(body))
     const options = this.postOptions(body)
-    await httpRequest.post(options).promise()
+    await httpRequest.post(options).promise().catch((e: any) => {
+      this.errors.push(e.message)
+      winston.debug('caught', e.message)
+    })
   }
 
   protected createEvent(row: Hub.JsonDetail.Row, mapping: any) {
