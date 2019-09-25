@@ -72,6 +72,9 @@ export class MparticleTransaction {
             rows.push(row)
             if (rows.length === Number(maxEventsPerBatch)) {
               this.sendChunk(rows, mapping)
+                .catch((e) => {
+                  return new Hub.ActionResponse({success: false, message: e.message })
+                })
               rows = []
             }
           } catch (e) {
@@ -86,7 +89,10 @@ export class MparticleTransaction {
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
-        await this.sendChunk(rows, mapping)
+        this.sendChunk(rows, mapping)
+          .catch((e) => {
+            return new Hub.ActionResponse({success: false, message: e.message })
+          })
       }
       return new Hub.ActionResponse({ success: true })
     } catch (e) {
@@ -105,9 +111,7 @@ export class MparticleTransaction {
 
     winston.debug("BODY", JSON.stringify(body))
     const options = this.postOptions(body)
-    return await httpRequest.post(options).then((wat) => {
-      winston.debug('WAT', wat)
-    })
+    return await httpRequest.post(options)
   }
 
   protected createEvent(row: Hub.JsonDetail.Row, mapping: any) {
