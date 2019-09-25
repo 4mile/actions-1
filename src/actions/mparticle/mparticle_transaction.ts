@@ -79,7 +79,13 @@ export class MparticleTransaction {
           try {
             rows.push(row)
             if (rows.length === Number(maxEventsPerBatch)) {
-              this.sendChunk(rows, mapping)
+              this.sendChunk(rows, mapping).catch((e) => {
+                const code = e.statusCode
+                const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
+                winston.debug('ERROR', JSON.stringify(e))
+                winston.debug("ERROR MSG", msg)
+                return new Hub.ActionResponse({success: false, message: msg})
+              })
               rows = []
             }
           } catch (e) {
@@ -99,6 +105,7 @@ export class MparticleTransaction {
       winston.debug("RETURNING A SUCCESS")
       return new Hub.ActionResponse({ success: true })
     } catch (e) {
+      winston.debug("RETURNING A FAILURE")
       return new Hub.ActionResponse({ success: false, message: e.message })
     }
   }
@@ -114,7 +121,7 @@ export class MparticleTransaction {
 
     winston.debug("BODY", JSON.stringify(body))
     const options = this.postOptions(body)
-    return httpRequest.post(options)
+    httpRequest.post(options)
       .catch((e: any) => {
         const code = e.statusCode
         const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
