@@ -91,6 +91,7 @@ export class MparticleTransaction {
       if (rows.length > 0) {
         this.sendChunk(rows, mapping)
           .catch((e) => {
+            winston.debug('SOMETHINGS WRONG', JSON.stringify(e))
             return new Hub.ActionResponse({success: false, message: e.message })
           })
       }
