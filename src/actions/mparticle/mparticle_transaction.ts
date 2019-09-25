@@ -114,7 +114,7 @@ export class MparticleTransaction {
 
     winston.debug("BODY", JSON.stringify(body))
     const options = this.postOptions(body)
-    return (await httpRequest.post(options))
+    return httpRequest.post(options)
       .catch((e: any) => {
         const code = e.statusCode
         const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
