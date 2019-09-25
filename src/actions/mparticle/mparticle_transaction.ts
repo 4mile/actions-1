@@ -79,7 +79,7 @@ export class MparticleTransaction {
           try {
             rows.push(row)
             if (rows.length === Number(maxEventsPerBatch)) {
-              this.sendChunk(rows, mapping).catch(handleError)
+              this.sendChunk(rows, mapping).catch(this.handleError)
               rows = []
             }
           } catch (e) {
@@ -94,7 +94,7 @@ export class MparticleTransaction {
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
-        this.sendChunk(rows, mapping).catch(handleError)
+        this.sendChunk(rows, mapping).catch(this.handleError)
       }
       return new Hub.ActionResponse({ success: true })
     } catch (e) {
