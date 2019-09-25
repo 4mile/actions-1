@@ -103,8 +103,9 @@ export class MparticleTransaction {
       if (rows.length > 0) {
         this.sendChunk(rows, mapping)
       }
-      winston.debug("RETURNING A SUCCESS")
       if (this.errors.length === 0) {
+        winston.debug("RETURNING A SUCCESS")
+        winston.debug(rows.length)
         return new Hub.ActionResponse({ success: true })
       } else {
         winston.debug("REALLY RETURNING A FAILURE")
