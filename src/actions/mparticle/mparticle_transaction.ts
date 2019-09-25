@@ -27,6 +27,7 @@ export class MparticleTransaction {
   apiKey: string | undefined
   apiSecret: string | undefined
   eventType: string = ''
+  errors: array = []
 
   // The mapping for user-related data
   userIdentities: {[key:string]: string} = {
@@ -61,7 +62,7 @@ export class MparticleTransaction {
   // }
 
   async handleRequest(request: Hub.ActionRequest): Promise<Hub.ActionResponse> {
-    const errors: Error[] = []
+    // const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
     let mapping: Mapping = {}
     this.eventType = this.setEventType(request.formParams.data_type)
@@ -84,17 +85,17 @@ export class MparticleTransaction {
                 const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
                 winston.debug('ERROR', JSON.stringify(e))
                 winston.debug("ERROR MSG", msg)
-                return new Hub.ActionResponse({success: false, message: msg})
+                this.errors.push(msg)
               })
               rows = []
             }
           } catch (e) {
-            errors.push(e)
+            this.errors.push(e)
           }
         },
       })
     } catch (e) {
-      errors.push(e)
+      this.errors.push(e)
     }
 
     try {
@@ -103,7 +104,12 @@ export class MparticleTransaction {
         this.sendChunk(rows, mapping)
       }
       winston.debug("RETURNING A SUCCESS")
-      return new Hub.ActionResponse({ success: true })
+      if (this.errors.length === 0) {
+        return new Hub.ActionResponse({ success: true })
+      } else {
+        winston.debug("REALLY RETURNING A FAILURE")
+        return new Hub.ActionResponse({ success: false, message: this.errors[0] })
+      }
     } catch (e) {
       winston.debug("RETURNING A FAILURE")
       return new Hub.ActionResponse({ success: false, message: e.message })
@@ -127,6 +133,7 @@ export class MparticleTransaction {
         const msg = `${code} - ${mparticleErrorCodes[code.toString()]}`
         winston.debug('ERROR', JSON.stringify(e))
         winston.debug("ERROR MSG", msg)
+        this.errors.push(msg)
         return new Hub.ActionResponse({success: false, message: msg})
       })
   }
