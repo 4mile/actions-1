@@ -27,7 +27,7 @@ export class MparticleTransaction {
   apiKey: string | undefined
   apiSecret: string | undefined
   eventType: string = ''
-  errors: array = []
+  errors: any = []
 
   // The mapping for user-related data
   userIdentities: {[key:string]: string} = {
