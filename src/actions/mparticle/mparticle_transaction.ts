@@ -52,7 +52,7 @@ export class MparticleTransaction {
     [MparticleEventTags.MpSessionUuid]: MparticleEventMaps.SessionUuid,
   }
 
-  handleError(e) {
+  handleError(e: any) {
     const code = e.statusCode
     const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
     winston.debug('ERROR', JSON.stringify(e))
