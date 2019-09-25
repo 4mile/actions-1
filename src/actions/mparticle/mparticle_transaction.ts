@@ -105,7 +105,7 @@ export class MparticleTransaction {
       }
       if (this.errors.length === 0) {
         winston.debug("RETURNING A SUCCESS")
-        winston.debug(rows.length)
+        winston.debug(rows.length.toString())
         return new Hub.ActionResponse({ success: true })
       } else {
         winston.debug("REALLY RETURNING A FAILURE")
