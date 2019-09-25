@@ -5,6 +5,7 @@ import * as httpRequest from "request-promise-native"
 
 import { MparticleUserTags, MparticleUserMaps, MparticleEventTags, MparticleEventMaps } from './mparticle_enums'
 import { MP_API_URL, EVENT_NAME, EVENT_TYPE, ENVIRONMENT, USER, EVENT } from './mparticle_constants'
+// import { mparticleErrorCodes } from './mparticle_error_codes'
 
 const maxEventsPerBatch = process.env.MAX_EVENTS_PER_BATCH
 
@@ -104,7 +105,9 @@ export class MparticleTransaction {
 
     winston.debug("BODY", JSON.stringify(body))
     const options = this.postOptions(body)
-    return await httpRequest.post(options).promise()
+    return await httpRequest.post(options).then((wat) {
+      winston.debug('WAT' wat)
+    })
   }
 
   protected createEvent(row: Hub.JsonDetail.Row, mapping: any) {
