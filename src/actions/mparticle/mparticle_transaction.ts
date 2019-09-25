@@ -52,13 +52,13 @@ export class MparticleTransaction {
     [MparticleEventTags.MpSessionUuid]: MparticleEventMaps.SessionUuid,
   }
 
-  handleError(e: any) {
-    const code = e.statusCode
-    const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
-    winston.debug('ERROR', JSON.stringify(e))
-    winston.debug("ERROR MSG", msg)
-    return new Hub.ActionResponse({success: false, message: msg})
-  }
+  // handleError(e: any) {
+  //   const code = e.statusCode
+  //   const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
+  //   winston.debug('ERROR', JSON.stringify(e))
+  //   winston.debug("ERROR MSG", msg)
+  //   return new Hub.ActionResponse({success: false, message: msg})
+  // }
 
   async handleRequest(request: Hub.ActionRequest): Promise<Hub.ActionResponse> {
     const errors: Error[] = []
@@ -79,7 +79,13 @@ export class MparticleTransaction {
           try {
             rows.push(row)
             if (rows.length === Number(maxEventsPerBatch)) {
-              this.sendChunk(rows, mapping).catch(this.handleError)
+              this.sendChunk(rows, mapping).catch((e) => {
+                const code = e.statusCode
+                const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
+                winston.debug('ERROR', JSON.stringify(e))
+                winston.debug("ERROR MSG", msg)
+                return new Hub.ActionResponse({success: false, message: msg})
+              })
               rows = []
             }
           } catch (e) {
@@ -94,8 +100,15 @@ export class MparticleTransaction {
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
-        this.sendChunk(rows, mapping).catch(this.handleError)
+        this.sendChunk(rows, mapping).catch((e) => {
+          const code = e.statusCode
+          const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
+          winston.debug('ERROR', JSON.stringify(e))
+          winston.debug("ERROR MSG", msg)
+          return new Hub.ActionResponse({success: false, message: msg})
+        })
       }
+      winston.debug("RETURNING A SUCCESS")
       return new Hub.ActionResponse({ success: true })
     } catch (e) {
       return new Hub.ActionResponse({ success: false, message: e.message })
