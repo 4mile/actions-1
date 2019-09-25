@@ -5,7 +5,7 @@ import * as httpRequest from "request-promise-native"
 
 import { MparticleUserTags, MparticleUserMaps, MparticleEventTags, MparticleEventMaps } from './mparticle_enums'
 import { MP_API_URL, EVENT_NAME, EVENT_TYPE, ENVIRONMENT, USER, EVENT } from './mparticle_constants'
-// import { mparticleErrorCodes } from './mparticle_error_codes'
+import { mparticleErrorCodes } from './mparticle_error_codes'
 
 const maxEventsPerBatch = process.env.MAX_EVENTS_PER_BATCH
 
@@ -52,6 +52,14 @@ export class MparticleTransaction {
     [MparticleEventTags.MpSessionUuid]: MparticleEventMaps.SessionUuid,
   }
 
+  handleError(e) {
+    const code = e.statusCode
+    const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
+    winston.debug('ERROR', JSON.stringify(e))
+    winston.debug("ERROR MSG", msg)
+    return new Hub.ActionResponse({success: false, message: msg})
+  }
+
   async handleRequest(request: Hub.ActionRequest): Promise<Hub.ActionResponse> {
     const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
@@ -71,10 +79,7 @@ export class MparticleTransaction {
           try {
             rows.push(row)
             if (rows.length === Number(maxEventsPerBatch)) {
-              this.sendChunk(rows, mapping)
-                .catch((e) => {
-                  return new Hub.ActionResponse({success: false, message: e.message })
-                })
+              this.sendChunk(rows, mapping).catch(handleError)
               rows = []
             }
           } catch (e) {
@@ -89,11 +94,7 @@ export class MparticleTransaction {
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
-        this.sendChunk(rows, mapping)
-          .catch((e) => {
-            winston.debug('SOMETHINGS WRONG', JSON.stringify(e))
-            return new Hub.ActionResponse({success: false, message: e.message })
-          })
+        this.sendChunk(rows, mapping).catch(handleError)
       }
       return new Hub.ActionResponse({ success: true })
     } catch (e) {
