@@ -76,6 +76,7 @@ export class MparticleTransaction {
         },
       })
     } catch (e) {
+      winston.debug("ERROR", e)
       this.errors.push(e)
     }
 
@@ -164,7 +165,7 @@ export class MparticleTransaction {
         })
       }
     }
-    
+
     if (!this.containsUserIdentity(eventUserIdentities)) {
       throw "Each row must specify at least 1 identity tag."
     }
