@@ -163,6 +163,10 @@ export class MparticleTransaction {
           data.custom_attributes[key] = val
         })
       }
+
+      if (!this.containsUserIdentity(eventUserIdentities)) {
+        throw "Each row must specify at least 1 identity tag."
+      }
     }
 
     return {
@@ -177,6 +181,10 @@ export class MparticleTransaction {
       schema_version: 2,
       environment: ENVIRONMENT,
     }
+  }
+
+  protected containsUserIdentity(userIdentities: any): boolean {
+    return (Object.getOwnPropertyNames(userIdentities).length > 0)
   }
 
   protected setEventType(dataType: string | undefined) {
