@@ -53,16 +53,7 @@ export class MparticleTransaction {
     [MparticleEventTags.MpSessionUuid]: MparticleEventMaps.SessionUuid,
   }
 
-  // handleError(e: any) {
-  //   const code = e.statusCode
-  //   const msg = `${code} - ${mparticleErrorCodes(code.toString())}`
-  //   winston.debug('ERROR', JSON.stringify(e))
-  //   winston.debug("ERROR MSG", msg)
-  //   return new Hub.ActionResponse({success: false, message: msg})
-  // }
-
   async handleRequest(request: Hub.ActionRequest): Promise<Hub.ActionResponse> {
-    // const errors: Error[] = []
     let rows: Hub.JsonDetail.Row[] = []
     let mapping: Mapping = {}
     this.eventType = this.setEventType(request.formParams.data_type)
@@ -88,29 +79,22 @@ export class MparticleTransaction {
       this.errors.push(e)
     }
 
-    winston.debug("ERRORS", this.errors.length.toString())
-
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
         await this.sendChunk(rows, mapping)
       }
       if (this.errors.length === 0) {
-        winston.debug('SUCCESS', rows.length.toString())
-        return new Hub.ActionResponse({ success: false, message: 'is this ever not a 200' })
-        // return new Hub.ActionResponse({ success: true })
+        return new Hub.ActionResponse({ success: true })
       } else {
-        winston.debug("FAIL", JSON.stringify(this.errors))
         return new Hub.ActionResponse({ success: false, message: this.errors[0] })
       }
     } catch (e) {
-      winston.debug("CAUGHT FAIL", this.errors[0])
       return new Hub.ActionResponse({ success: false, message: e.message })
     }
   }
 
   async sendChunk(rows: Hub.JsonDetail.Row[], mapping: any) {
-    winston.debug("ROW COUNT TOP OF sendChunk", rows.length)
     const chunk = rows.slice(0)
     let body: MparticleBulkEvent[] = []
     chunk.forEach((row: Hub.JsonDetail.Row) => {
