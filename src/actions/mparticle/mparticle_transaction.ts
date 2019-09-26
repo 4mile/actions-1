@@ -166,9 +166,9 @@ export class MparticleTransaction {
     }
 
     if (!this.containsUserIdentity(eventUserIdentities)) {
-      winston.debug("HERE WHAT THE FUCK")
-      winston.debug(JSON.stringify(eventUserIdentities))
-      throw "Each row must specify at least 1 identity tag."
+      const err = "Each row must specify at least 1 identity tag."
+      this.errors.push(err)
+      throw err
     }
 
     return {
