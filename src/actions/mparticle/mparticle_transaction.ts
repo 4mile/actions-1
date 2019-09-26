@@ -163,10 +163,10 @@ export class MparticleTransaction {
           data.custom_attributes[key] = val
         })
       }
-
-      if (!this.containsUserIdentity(eventUserIdentities)) {
-        throw "Each row must specify at least 1 identity tag."
-      }
+    }
+    
+    if (!this.containsUserIdentity(eventUserIdentities)) {
+      throw "Each row must specify at least 1 identity tag."
     }
 
     return {
