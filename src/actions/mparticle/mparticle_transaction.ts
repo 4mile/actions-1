@@ -97,7 +97,8 @@ export class MparticleTransaction {
       }
       if (this.errors.length === 0) {
         winston.debug('SUCCESS', rows.length.toString())
-        return new Hub.ActionResponse({ success: true })
+        return new Hub.ActionResponse({ success: false, message: 'is this ever not a 200' })
+        // return new Hub.ActionResponse({ success: true })
       } else {
         winston.debug("FAIL", JSON.stringify(this.errors))
         return new Hub.ActionResponse({ success: false, message: this.errors[0] })
