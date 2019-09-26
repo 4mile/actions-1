@@ -76,6 +76,8 @@ export class MparticleTransaction {
         },
       })
     } catch (e) {
+      winston.debug(JSON.stringify(e))
+      if (e === "Each row must specify at least 1 identity tag.") { throw e }
       this.errors.push(e)
     }
 
@@ -167,12 +169,6 @@ export class MparticleTransaction {
       }
     }
 
-    if (!this.containsUserIdentity(eventUserIdentities)) {
-      const err = "Each row must specify at least 1 identity tag."
-      this.errors.push(err)
-      throw err
-    }
-
     return {
       events: [
         {
@@ -225,6 +221,13 @@ export class MparticleTransaction {
     fields.dimensions.forEach((field: ExploreField) => {
       this.mapObject(mapping, field)
     })
+
+    if (!this.containsUserIdentity(mapping.userIdentities)) {
+      const err = "Each row must specify at least 1 identity tag."
+      this.errors.push(err)
+      throw err
+    }
+
     return mapping
   }
 
