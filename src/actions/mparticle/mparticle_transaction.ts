@@ -129,6 +129,12 @@ export class MparticleTransaction {
         eventUserAttributes[key] = val
       })
     } else {
+      Object.keys(mapping.userIdentities).forEach((attr: any) => {
+        const key = mapping.userIdentities[attr]
+        const val = row[attr].value
+        eventUserIdentities[key] = val
+      })
+
       data.device_info = {}
       data.custom_attributes = {}
       if (mapping.eventName) {
@@ -192,6 +198,8 @@ export class MparticleTransaction {
       }
     } else {
       mapping = {
+        userIdentities: {},
+        userAttributes: {},
         eventName: {},
         deviceInfo: {},
         dataEventAttributes: {},
@@ -209,25 +217,25 @@ export class MparticleTransaction {
   }
 
   protected mapObject(mapping: any, field: ExploreField) {
-    if (field.tags.length > 0) {
-      if (this.eventType === USER) {
-        const tag = field.tags[0]
-        if (Object.keys(this.userIdentities).indexOf(tag) !== -1) {
-          mapping.userIdentities[field.name] = this.userIdentities[tag]
-        } else {
-          mapping.userAttributes[field.name] = `looker_${field.name}`
-        }
+    if (this.eventType === USER) {
+      const tag = field.tags[0]
+      if (Object.keys(this.userIdentities).indexOf(tag) !== -1) {
+        mapping.userIdentities[field.name] = this.userIdentities[tag]
       } else {
-        const tag = field.tags[0]
-        if (tag === MparticleEventTags.MpEventName) {
-          mapping.eventName[field.name] = MparticleEventMaps.EventName
-        } else if (tag === MparticleEventTags.MpDeviceInfo) {
-          mapping.deviceInfo[field.name] = `looker_${field.name}`
-        } else if (Object.keys(this.dataEventAttributes).indexOf(tag) !== -1) {
-          mapping.dataEventAttributes[field.name] = this.dataEventAttributes[tag]
-        } else {
-          mapping.customAttributes[field.name] = `looker_${field.name}`
-        }
+        mapping.userAttributes[field.name] = `looker_${field.name}`
+      }
+    } else {
+      const tag = field.tags[0]
+      if (Object.keys(this.userIdentities).indexOf(tag) !== -1) {
+        mapping.userIdentities[field.name] = this.userIdentities[tag]
+      } else if (tag === MparticleEventTags.MpEventName) {
+        mapping.eventName[field.name] = MparticleEventMaps.EventName
+      } else if (tag === MparticleEventTags.MpDeviceInfo) {
+        mapping.deviceInfo[field.name] = `looker_${field.name}`
+      } else if (Object.keys(this.dataEventAttributes).indexOf(tag) !== -1) {
+        mapping.dataEventAttributes[field.name] = this.dataEventAttributes[tag]
+      } else {
+        mapping.customAttributes[field.name] = `looker_${field.name}`
       }
     }
   }
