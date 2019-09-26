@@ -85,8 +85,10 @@ export class MparticleTransaction {
         await this.sendChunk(rows, mapping)
       }
       if (this.errors.length === 0) {
+        winston.debug("SUCCESS")
         return new Hub.ActionResponse({ success: true })
       } else {
+        winston.debug("FAILURE")
         return new Hub.ActionResponse({ success: false, message: this.errors[0] })
       }
     } catch (e) {
