@@ -1,4 +1,3 @@
-import * as winston from "winston"
 import * as Hub from "../../hub"
 
 import * as httpRequest from "request-promise-native"
@@ -65,7 +64,6 @@ export class MparticleTransaction {
       await request.streamJsonDetail({
         onFields: (fields) => {
           mapping = this.createMappingFromFields(fields)
-          winston.debug("FIELDS", JSON.stringify(fields))
         },
         onRow: (row) => {
           rows.push(row)
@@ -78,22 +76,18 @@ export class MparticleTransaction {
         },
       })
     } catch (e) {
-      winston.debug(JSON.stringify(e))
       if (e === "Each row must specify at least 1 identity tag.") { throw e }
       this.errors.push(e)
     }
 
-    winston.debug("ROWS", JSON.stringify(rows))
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
         await this.sendChunk(rows, mapping)
       }
       if (this.errors.length === 0) {
-        winston.debug("SUCCESS")
         return new Hub.ActionResponse({ success: true })
       } else {
-        winston.debug("FAILURE")
         return new Hub.ActionResponse({ success: false, message: this.errors[0] })
       }
     } catch (e) {
@@ -109,7 +103,6 @@ export class MparticleTransaction {
       body.push(eventEntry)
     })
 
-    winston.debug("BODY", JSON.stringify(body))
     const options = this.postOptions(body)
     await httpRequest.post(options).promise().catch((e: any) => {
       this.errors.push(`${e.statusCode} - ${mparticleErrorCodes[e.statusCode]}`)
@@ -196,7 +189,6 @@ export class MparticleTransaction {
     } else if (dataType === EVENT) {
       return EVENT
     }
-    // return ''
     throw "Missing data type (user|event)."
   }
 
