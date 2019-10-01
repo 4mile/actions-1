@@ -1,3 +1,4 @@
+import * as winston from "winston"
 import * as semver from "semver"
 import * as Hub from "../../hub"
 
@@ -40,6 +41,7 @@ export class MparticleAction extends Hub.Action {
   }
 
   async execute(request: Hub.ActionRequest) {
+    winston.debug("REQUEST", JSON.stringify(request))
     // create a stateful object to manage the transaction
     const transaction = new MparticleTransaction()
     // return the response from the transaction object
