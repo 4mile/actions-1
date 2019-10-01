@@ -65,6 +65,7 @@ export class MparticleTransaction {
       await request.streamJsonDetail({
         onFields: (fields) => {
           mapping = this.createMappingFromFields(fields)
+          winston.debug("FIELDS", JSON.stringify(fields))
         },
         onRow: (row) => {
           rows.push(row)
@@ -82,6 +83,7 @@ export class MparticleTransaction {
       this.errors.push(e)
     }
 
+    winston.debug("ROWS", JSON.stringify(rows))
     try {
       // if any rows are left, send one more chunk
       if (rows.length > 0) {
