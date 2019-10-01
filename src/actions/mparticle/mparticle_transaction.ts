@@ -3,14 +3,14 @@ import * as Hub from "../../hub"
 
 import * as httpRequest from "request-promise-native"
 
-import { MparticleUserTags, MparticleUserMaps, MparticleEventTags, MparticleEventMaps } from './mparticle_enums'
-import { MP_API_URL, EVENT_NAME, EVENT_TYPE, ENVIRONMENT, USER, EVENT } from './mparticle_constants'
-import { mparticleErrorCodes } from './mparticle_error_codes'
+import { ENVIRONMENT, EVENT, EVENT_NAME, EVENT_TYPE, MP_API_URL, USER } from "./mparticle_constants"
+import { MparticleEventMaps, MparticleEventTags, MparticleUserMaps, MparticleUserTags } from "./mparticle_enums"
+import { mparticleErrorCodes } from "./mparticle_error_codes"
 
 const maxEventsPerBatch = process.env.MAX_EVENTS_PER_BATCH
 
 // import { LookmlModelExploreFieldset as ExploreFieldset } from "../../api_types/lookml_model_explore_fieldset"
-import { LookmlModelExploreField as ExploreField } from '../../api_types/lookml_model_explore_field'
+import { LookmlModelExploreField as ExploreField } from "../../api_types/lookml_model_explore_field"
 
 interface Mapping {
   customAttributes?: object
@@ -26,11 +26,11 @@ interface MparticleBulkEvent { [key: string]: any }
 export class MparticleTransaction {
   apiKey: string | undefined
   apiSecret: string | undefined
-  eventType: string = ''
+  eventType = ""
   errors: any = []
 
   // The mapping for user-related data
-  userIdentities: {[key:string]: string} = {
+  userIdentities: {[key: string]: string} = {
     [MparticleUserTags.MpCustomerId]: MparticleUserMaps.Customerid,
     [MparticleUserTags.MpEmail]: MparticleUserMaps.Email,
     [MparticleUserTags.MpFacebook]: MparticleUserMaps.Facebook,
@@ -45,7 +45,7 @@ export class MparticleTransaction {
   }
 
   // The mapping for event-related data, specific to API request's data section.
-  dataEventAttributes: {[key:string]: string} = {
+  dataEventAttributes: {[key: string]: string} = {
     [MparticleEventTags.MpCustomEventType]: MparticleEventMaps.CustomEventType,
     [MparticleEventTags.MpEventId]: MparticleEventMaps.EventId,
     [MparticleEventTags.MpTimestampUnixtimeMs]: MparticleEventMaps.TimestampUnixtimeMs,
@@ -70,7 +70,9 @@ export class MparticleTransaction {
         onRow: (row) => {
           rows.push(row)
           if (rows.length === Number(maxEventsPerBatch)) {
-            this.sendChunk(rows, mapping)
+            this.sendChunk(rows, mapping).catch((e) => {
+              throw e
+            })
             rows = []
           }
         },
@@ -100,7 +102,7 @@ export class MparticleTransaction {
 
   async sendChunk(rows: Hub.JsonDetail.Row[], mapping: any) {
     const chunk = rows.slice(0)
-    let body: MparticleBulkEvent[] = []
+    const body: MparticleBulkEvent[] = []
     chunk.forEach((row: Hub.JsonDetail.Row) => {
       const eventEntry = this.createEvent(row, mapping)
       body.push(eventEntry)
@@ -172,9 +174,9 @@ export class MparticleTransaction {
     return {
       events: [
         {
-          data: data,
+          data,
           event_type: EVENT_TYPE,
-        }
+        },
       ],
       user_attributes: eventUserAttributes,
       user_identities: eventUserIdentities,
@@ -258,14 +260,14 @@ export class MparticleTransaction {
   protected postOptions(body: MparticleBulkEvent[]) {
     const auth = Buffer
       .from(`${this.apiKey}:${this.apiSecret}`)
-      .toString('base64')
+      .toString("base64")
 
     return {
       url: MP_API_URL,
       headers: {
         Authorization: `Basic ${auth}`,
       },
-      body: body,
+      body,
       json: true,
       resolveWithFullResponse: true,
     }
