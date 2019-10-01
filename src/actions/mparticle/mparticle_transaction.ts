@@ -9,7 +9,6 @@ import { mparticleErrorCodes } from "./mparticle_error_codes"
 
 const maxEventsPerBatch = process.env.MAX_EVENTS_PER_BATCH
 
-// import { LookmlModelExploreFieldset as ExploreFieldset } from "../../api_types/lookml_model_explore_fieldset"
 import { LookmlModelExploreField as ExploreField } from "../../api_types/lookml_model_explore_field"
 
 interface Mapping {
@@ -195,6 +194,7 @@ export class MparticleTransaction {
     } else if (dataType === EVENT) {
       return EVENT
     }
+    // return ''
     throw "Missing data type (user|event)."
   }
 
